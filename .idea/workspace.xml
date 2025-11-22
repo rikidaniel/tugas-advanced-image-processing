@@ -4,19 +4,40 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="190c2e49-f92b-4c6f-9bf5-6287a320d672" name="Changes" comment="" />
+    <list default="true" id="190c2e49-f92b-4c6f-9bf5-6287a320d672" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/frames.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frequency_filters.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/styles.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/dft_explorer.py" beforeDir="false" afterPath="$PROJECT_DIR$/dft_explorer.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/image_view.py" beforeDir="false" afterPath="$PROJECT_DIR$/image_view.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/index.py" beforeDir="false" afterPath="$PROJECT_DIR$/index.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/mach_and_band_effect.py" beforeDir="false" afterPath="$PROJECT_DIR$/mach_and_band_effect.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/program3_single_pixel.py" beforeDir="false" afterPath="$PROJECT_DIR$/program3_single_pixel.py" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Python Script" />
+      </list>
+    </option>
+  </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
-  <component name="ProjectColorInfo"><![CDATA[{
-  "associatedIndex": 2
-}]]></component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 2
+}</component>
   <component name="ProjectId" id="35Kunfe8LRmZP3BxirQx2YQx7fK" />
+  <component name="ProjectLevelVcsManager">
+    <ConfirmationsSetting value="2" id="Add" />
+  </component>
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
@@ -24,7 +45,14 @@
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
     "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "Python.dft_explorer.executor": "Run",
+    "Python.frames.executor": "Run",
+    "Python.image_view.executor": "Run",
     "Python.index.executor": "Run",
+    "Python.mach_and_band_effect.executor": "Run",
+    "Python.main.executor": "Run",
+    "Python.program3_single_pixel.executor": "Run",
+    "Python.styles.executor": "Run",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.git.unshallow": "true",
     "git-widget-placeholder": "main",
@@ -54,6 +82,9 @@
       <option name="presentableId" value="Default" />
       <updated>1762871254469</updated>
       <workItem from="1762871255552" duration="706000" />
+      <workItem from="1762872214551" duration="5000" />
+      <workItem from="1763781134830" duration="1354000" />
+      <workItem from="1763784816501" duration="2306000" />
     </task>
     <servers />
   </component>
@@ -61,6 +92,13 @@
     <option name="version" value="3" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
-    <SUITE FILE_PATH="coverage/tugas_advanced_image_processing$index.coverage" NAME="index Coverage Results" MODIFIED="1762871932697" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/tugas_advanced_image_processing$program3_single_pixel.coverage" NAME="program3_single_pixel Coverage Results" MODIFIED="1763787040670" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/tugas_advanced_image_processing$frames.coverage" NAME="frames Coverage Results" MODIFIED="1763787006673" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/tugas_advanced_image_processing$dft_explorer.coverage" NAME="dft_explorer Coverage Results" MODIFIED="1763786086230" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/tugas_advanced_image_processing$main.coverage" NAME="main Coverage Results" MODIFIED="1763787010048" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/tugas_advanced_image_processing$mach_and_band_effect.coverage" NAME="mach_and_band_effect Coverage Results" MODIFIED="1763785959109" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/tugas_advanced_image_processing$image_view.coverage" NAME="image_view Coverage Results" MODIFIED="1763785901284" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/tugas_advanced_image_processing$styles.coverage" NAME="styles Coverage Results" MODIFIED="1763787002542" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/tugas_advanced_image_processing$index.coverage" NAME="index Coverage Results" MODIFIED="1763787014230" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
 </project>
