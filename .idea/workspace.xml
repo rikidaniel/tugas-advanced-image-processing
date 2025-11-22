@@ -5,14 +5,14 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="190c2e49-f92b-4c6f-9bf5-6287a320d672" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/frames.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frequency_filters.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/base_frame.py" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/styles.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/dft_explorer.py" beforeDir="false" afterPath="$PROJECT_DIR$/dft_explorer.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frequency_filters.py" beforeDir="false" afterPath="$PROJECT_DIR$/frequency_filters.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/image_view.py" beforeDir="false" afterPath="$PROJECT_DIR$/image_view.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/index.py" beforeDir="false" afterPath="$PROJECT_DIR$/index.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/index.py" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/mach_and_band_effect.py" beforeDir="false" afterPath="$PROJECT_DIR$/mach_and_band_effect.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/program3_single_pixel.py" beforeDir="false" afterPath="$PROJECT_DIR$/program3_single_pixel.py" afterDir="false" />
     </list>
@@ -47,6 +47,7 @@
     "ModuleVcsDetector.initialDetectionPerformed": "true",
     "Python.dft_explorer.executor": "Run",
     "Python.frames.executor": "Run",
+    "Python.frequency_filters.executor": "Run",
     "Python.image_view.executor": "Run",
     "Python.index.executor": "Run",
     "Python.mach_and_band_effect.executor": "Run",
@@ -84,7 +85,7 @@
       <workItem from="1762871255552" duration="706000" />
       <workItem from="1762872214551" duration="5000" />
       <workItem from="1763781134830" duration="1354000" />
-      <workItem from="1763784816501" duration="2306000" />
+      <workItem from="1763784816501" duration="8305000" />
     </task>
     <servers />
   </component>
@@ -94,8 +95,9 @@
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/tugas_advanced_image_processing$program3_single_pixel.coverage" NAME="program3_single_pixel Coverage Results" MODIFIED="1763787040670" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/tugas_advanced_image_processing$frames.coverage" NAME="frames Coverage Results" MODIFIED="1763787006673" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/tugas_advanced_image_processing$dft_explorer.coverage" NAME="dft_explorer Coverage Results" MODIFIED="1763786086230" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/tugas_advanced_image_processing$main.coverage" NAME="main Coverage Results" MODIFIED="1763787010048" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/tugas_advanced_image_processing$dft_explorer.coverage" NAME="dft_explorer Coverage Results" MODIFIED="1763787333798" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/tugas_advanced_image_processing$frequency_filters.coverage" NAME="frequency_filters Coverage Results" MODIFIED="1763787348349" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/tugas_advanced_image_processing$main.coverage" NAME="main Coverage Results" MODIFIED="1763794251959" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/tugas_advanced_image_processing$mach_and_band_effect.coverage" NAME="mach_and_band_effect Coverage Results" MODIFIED="1763785959109" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/tugas_advanced_image_processing$image_view.coverage" NAME="image_view Coverage Results" MODIFIED="1763785901284" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/tugas_advanced_image_processing$styles.coverage" NAME="styles Coverage Results" MODIFIED="1763787002542" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />

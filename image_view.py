@@ -1,53 +1,42 @@
 import tkinter as tk
-from tkinter import filedialog, messagebox
+from tkinter import filedialog, messagebox, ttk
 from PIL import Image, ImageTk
 import cv2
+from base_frame import BaseFrame
+from styles import COLORS
 
 
-class ImageViewerApp:
-    def __init__(self, root):
-        self.root = root
-        self.root.title("Program 1 - Image Viewer")
-        self.root.geometry("800x600")
+class ImageViewerApp(BaseFrame):
+    def __init__(self, parent):
+        super().__init__(parent)
 
-        header_frame = tk.Frame(root)
-        header_frame.pack(fill="x", pady=5)
+        content = self.create_header("Penampil Citra", "Membuka dan menampilkan citra dalam mode Warna atau Grayscale.")
 
-        btn_open = tk.Button(header_frame, text="Buka Gambar", command=self.open_image)
-        btn_open.pack(side="left", padx=10, pady=5)
+        # Toolbar di atas
+        toolbar = tk.Frame(content, bg="white")
+        toolbar.pack(fill="x", pady=(0, 20))
 
-        nim_label = tk.Label(header_frame, text="14240032",
-                             font=("Arial", 14, "bold"))
-        nim_label.pack(side="left", padx=20)
+        ttk.Button(toolbar, text="📂 Buka Gambar", command=self.open_image, style="Primary.TButton").pack(side="left",
+                                                                                                         padx=(0, 10))
+        ttk.Button(toolbar, text="Mode Grayscale", command=self.show_gray, style="Soft.TButton").pack(side="left",
+                                                                                                      padx=5)
+        ttk.Button(toolbar, text="Mode Warna", command=self.show_color, style="Soft.TButton").pack(side="left", padx=5)
 
-        nama_label = tk.Label(header_frame, text="Riki Daniel Tanebeth",
-                              font=("Arial", 14, "bold"))
-        nama_label.pack(side="left", padx=20)
+        # Area Canvas (Dengan Border Hijau Tipis)
+        canvas_frame = tk.Frame(content, bg=COLORS["bg_main"], bd=2, relief="flat")
+        canvas_frame.pack(fill="both", expand=True)
 
-        self.canvas = tk.Label(root, bg="white")
-        self.canvas.pack(expand=True, fill="both", padx=10, pady=10)
-
-        frame_btn = tk.Frame(root)
-        frame_btn.pack(pady=10)
-
-        btn_gray = tk.Button(frame_btn, text="Tampilkan Grayscale", command=self.show_gray, width=18)
-        btn_gray.grid(row=0, column=0, padx=5, pady=5)
-
-        btn_color = tk.Button(frame_btn, text="Tampilkan Berwarna", command=self.show_color, width=18)
-        btn_color.grid(row=0, column=1, padx=5, pady=5)
-
-        # HAPUS tombol Keluar yang sebelumnya ada di sini
+        self.canvas = tk.Label(canvas_frame, bg=COLORS["bg_main"], text="Belum ada gambar yang dipilih",
+                               fg="#6B7280", font=("Segoe UI", 12))
+        self.canvas.pack(fill="both", expand=True, padx=2, pady=2)
 
         self.img_rgb = None
         self.img_gray = None
         self.tk_img = None
 
     def open_image(self):
-        path = filedialog.askopenfilename(
-            filetypes=[("Image files", "*.jpg;*.jpeg;*.png;*.bmp;*.tiff")]
-        )
-        if not path:
-            return
+        path = filedialog.askopenfilename(filetypes=[("Image files", "*.jpg;*.jpeg;*.png;*.bmp;*.tiff")])
+        if not path: return
 
         img = cv2.imread(path)
         if img is None:
@@ -56,30 +45,30 @@ class ImageViewerApp:
 
         self.img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         self.img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-
         self.show_on_canvas(self.img_rgb)
 
     def show_gray(self):
         if self.img_gray is None:
-            messagebox.showwarning("Peringatan", "Silakan buka gambar terlebih dahulu.")
+            messagebox.showwarning("Info", "Silakan buka gambar terlebih dahulu.")
             return
         self.show_on_canvas(self.img_gray, is_gray=True)
 
     def show_color(self):
         if self.img_rgb is None:
-            messagebox.showwarning("Peringatan", "Silakan buka gambar terlebih dahulu.")
+            messagebox.showwarning("Info", "Silakan buka gambar terlebih dahulu.")
             return
         self.show_on_canvas(self.img_rgb)
 
     def show_on_canvas(self, img, is_gray=False):
-        # Konversi NumPy array ke PIL Image
-        pil_img = Image.fromarray(img)
-        pil_img = pil_img.resize((600, 400), Image.LANCZOS)
+        vh = self.canvas.winfo_height()
+        vw = self.canvas.winfo_width()
+        if vh < 100: vh = 500
+        if vw < 100: vw = 800
+
+        h, w = img.shape[:2]
+        scale = min(vw / w, vh / h) * 0.95
+        new_w, new_h = int(w * scale), int(h * scale)
+
+        pil_img = Image.fromarray(img).resize((new_w, new_h), Image.LANCZOS)
         self.tk_img = ImageTk.PhotoImage(pil_img)
-        self.canvas.config(image=self.tk_img)
-
-
-if __name__ == "__main__":
-    root = tk.Tk()
-    app = ImageViewerApp(root)
-    root.mainloop()
+        self.canvas.config(image=self.tk_img, text="")

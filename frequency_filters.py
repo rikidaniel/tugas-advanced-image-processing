@@ -3,289 +3,123 @@ from tkinter import ttk, filedialog, messagebox
 import numpy as np
 import cv2
 from PIL import Image, ImageTk
+from base_frame import BaseFrame
 
 
-class FrequencyFilterApp:
-    def __init__(self, root):
-        self.root = root
-        self.root.title("Program 5 - Filter Domain Frekuensi")
-        self.root.geometry("1000x650")
+class FrequencyFilterApp(BaseFrame):
+    def __init__(self, parent):
+        super().__init__(parent)
 
-        self.original_img = None       # gambar warna (PIL)
-        self.gray_img = None           # numpy grayscale
-        self.filtered_img = None       # hasil filter (PIL)
-        self.original_tk = None
-        self.filtered_tk = None
+        content = self.create_header("Program 5 - Filter Domain Frekuensi", "Implementasi Lowpass & Highpass Filter.")
 
-        self._build_ui()
+        ctrl_frame = ttk.LabelFrame(content, text="Panel Kontrol", padding=15)
+        ctrl_frame.pack(fill="x", pady=(0, 20))
 
-    # ===================== UI =====================
+        row1 = ttk.Frame(ctrl_frame)
+        row1.pack(fill="x", pady=5)
+        ttk.Button(row1, text="📂 Buka Gambar", command=self.open_image, style="Primary.TButton").pack(side="left",
+                                                                                                      padx=(0, 15))
+        ttk.Button(row1, text="↺ Reset Gambar", command=self.reset_image, style="Danger.TButton").pack(side="left")
 
-    def _build_ui(self):
-        # -------- Header (NIM + Nama) --------
-        header = tk.Frame(self.root)
-        header.pack(fill="x", pady=5)
+        row2 = ttk.Frame(ctrl_frame)
+        row2.pack(fill="x", pady=(20, 5))
 
-        tk.Label(
-            header,
-            text="Program 5 - Filter Domain Frekuensi",
-            font=("Arial", 14, "bold")
-        ).pack(side="left", padx=10)
-
-        tk.Label(
-            header,
-            text="14240032 - Riki Daniel Tanebeth",
-            font=("Arial", 11, "bold")
-        ).pack(side="right", padx=10)
-
-        # -------- Frame atas: tombol buka/reset --------
-        top = tk.Frame(self.root)
-        top.pack(side="top", fill="x", padx=10, pady=5)
-
-        btn_open = tk.Button(
-            top, text="Buka Gambar",
-            command=self.open_image
-        )
-        btn_open.pack(side="left", padx=5)
-
-        btn_reset = tk.Button(
-            top, text="Reset Gambar",
-            command=self.reset_image
-        )
-        btn_reset.pack(side="left", padx=5)
-
-        # Separator
-        sep = ttk.Separator(self.root, orient="horizontal")
-        sep.pack(fill="x", padx=10, pady=5)
-
-        # -------- Frame kontrol filter --------
-        ctrl = tk.LabelFrame(self.root, text="Pengaturan Filter", padx=10, pady=5)
-        ctrl.pack(side="top", fill="x", padx=10, pady=5)
-
-        # Jenis filter: Ideal / Butterworth / Gaussian
-        tk.Label(ctrl, text="Jenis filter:").grid(row=0, column=0, sticky="w")
+        ttk.Label(row2, text="Jenis Filter:", style="Sub.TLabel").pack(side="left")
         self.filter_type_var = tk.StringVar(value="Ideal")
-        cb_filter = ttk.Combobox(
-            ctrl,
-            textvariable=self.filter_type_var,
-            values=["Ideal", "Butterworth", "Gaussian"],
-            state="readonly",
-            width=15
-        )
-        cb_filter.grid(row=0, column=1, sticky="w", padx=5, pady=2)
+        ttk.Combobox(row2, textvariable=self.filter_type_var, values=["Ideal", "Butterworth", "Gaussian"],
+                     state="readonly", width=12).pack(side="left", padx=(5, 15))
 
-        # Lowpass / Highpass
-        tk.Label(ctrl, text="Tipe frekuensi:").grid(row=1, column=0, sticky="w")
+        ttk.Label(row2, text="Mode:", style="Sub.TLabel").pack(side="left")
         self.pass_type_var = tk.StringVar(value="Lowpass")
-        rb_lp = tk.Radiobutton(ctrl, text="Lowpass", variable=self.pass_type_var, value="Lowpass")
-        rb_hp = tk.Radiobutton(ctrl, text="Highpass", variable=self.pass_type_var, value="Highpass")
-        rb_lp.grid(row=1, column=1, sticky="w", padx=5, pady=2)
-        rb_hp.grid(row=1, column=2, sticky="w", padx=5, pady=2)
+        ttk.Combobox(row2, textvariable=self.pass_type_var, values=["Lowpass", "Highpass"],
+                     state="readonly", width=10).pack(side="left", padx=(5, 15))
 
-        # Cutoff frekuensi (D0)
-        tk.Label(ctrl, text="Cutoff (D0):").grid(row=2, column=0, sticky="w")
+        ttk.Label(row2, text="Cutoff (D0):", style="Sub.TLabel").pack(side="left")
         self.d0_var = tk.DoubleVar(value=40.0)
-        ent_d0 = tk.Entry(ctrl, textvariable=self.d0_var, width=10)
-        ent_d0.grid(row=2, column=1, sticky="w", padx=5, pady=2)
+        ttk.Entry(row2, textvariable=self.d0_var, width=6).pack(side="left", padx=(5, 15))
 
-        # Orde Butterworth (n)
-        tk.Label(ctrl, text="Orde Butterworth (n):").grid(row=3, column=0, sticky="w")
+        ttk.Label(row2, text="Orde (n):", style="Sub.TLabel").pack(side="left")
         self.n_var = tk.IntVar(value=2)
-        ent_n = tk.Entry(ctrl, textvariable=self.n_var, width=10)
-        ent_n.grid(row=3, column=1, sticky="w", padx=5, pady=2)
+        ttk.Entry(row2, textvariable=self.n_var, width=6).pack(side="left", padx=(5, 20))
 
-        # Tombol terapkan filter
-        btn_apply = tk.Button(
-            ctrl,
-            text="Terapkan Filter",
-            command=self.apply_filter
-        )
-        btn_apply.grid(row=0, column=3, rowspan=2, padx=20, pady=5, sticky="ns")
+        ttk.Button(row2, text="▶ Terapkan Filter", command=self.apply_filter, style="Soft.TButton").pack(side="left",
+                                                                                                         padx=20)
 
-        # Pesan bantu
-        note = tk.Label(
-            ctrl,
-            text=(
-                "Catatan:\n"
-                "- Nilai n hanya dipakai untuk Butterworth.\n"
-                "- Pilih Lowpass / Highpass untuk 6 jenis filter:\n"
-                "  Ideal, Butterworth, Gaussian."
-            ),
-            fg="gray",
-            justify="left"
-        )
-        note.grid(row=2, column=2, columnspan=2, sticky="w", padx=5, pady=2)
+        img_grid = ttk.Frame(content)
+        img_grid.pack(fill="both", expand=True)
+        img_grid.columnconfigure(0, weight=1)
+        img_grid.columnconfigure(1, weight=1)
 
-        # -------- Frame gambar (kiri = asli, kanan = hasil) --------
-        img_frame = tk.Frame(self.root)
-        img_frame.pack(fill="both", expand=True, padx=10, pady=10)
+        f_left = ttk.Frame(img_grid, style="Card.TFrame")
+        f_left.grid(row=0, column=0, sticky="nsew", padx=(0, 10))
+        tk.Label(f_left, text="Original Image (512x512)", bg="#F1F5F9", pady=8, font=("Segoe UI", 10, "bold")).pack(
+            fill="x")
+        self.lbl_original = tk.Label(f_left, bg="#F1F5F9")
+        self.lbl_original.pack(fill="both", expand=True)
 
-        left = tk.Frame(img_frame)
-        left.pack(side="left", fill="both", expand=True, padx=5)
+        f_right = ttk.Frame(img_grid, style="Card.TFrame")
+        f_right.grid(row=0, column=1, sticky="nsew", padx=(10, 0))
+        tk.Label(f_right, text="Filtered Result", bg="#F1F5F9", pady=8, font=("Segoe UI", 10, "bold")).pack(fill="x")
+        self.lbl_filtered = tk.Label(f_right, bg="#F1F5F9")
+        self.lbl_filtered.pack(fill="both", expand=True)
 
-        right = tk.Frame(img_frame)
-        right.pack(side="left", fill="both", expand=True, padx=5)
-
-        tk.Label(left, text="Gambar Asli").pack()
-        self.lbl_original = tk.Label(left, bg="black")
-        self.lbl_original.pack(fill="both", expand=True, padx=5, pady=5)
-
-        tk.Label(right, text="Hasil Filter").pack()
-        self.lbl_filtered = tk.Label(right, bg="black")
-        self.lbl_filtered.pack(fill="both", expand=True, padx=5, pady=5)
-
-    # ===================== Fungsi Utilitas =====================
+        self.gray_img = None
+        self.original_img = None
 
     def open_image(self):
-        path = filedialog.askopenfilename(
-            title="Pilih gambar",
-            filetypes=[("File gambar", "*.png;*.jpg;*.jpeg;*.bmp;*.tif;*.tiff")]
-        )
-        if not path:
-            return
+        path = filedialog.askopenfilename()
+        if not path: return
+        img_bgr = cv2.imread(path)
+        if img_bgr is None: return
 
-        try:
-            # Baca dengan OpenCV, konversi ke RGB
-            img_bgr = cv2.imread(path)
-            if img_bgr is None:
-                raise ValueError("Gagal membuka gambar.")
+        # --- NORMALISASI UKURAN KE 512x512 ---
+        # Mengubah ukuran gambar input menjadi tepat 512x512 piksel
+        img_bgr = cv2.resize(img_bgr, (512, 512))
 
-            img_rgb = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
+        self.gray_img = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2GRAY).astype(np.float32)
+        self.original_img = Image.fromarray(cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB))
 
-            # Simpan grayscale untuk proses DFT
-            gray = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2GRAY).astype(np.float32)
-
-            # Resize agar tidak terlalu besar (opsional)
-            max_size = 512
-            h, w = gray.shape
-            scale = min(max_size / h, max_size / w, 1.0)
-            if scale != 1.0:
-                new_w = int(w * scale)
-                new_h = int(h * scale)
-                gray = cv2.resize(gray, (new_w, new_h), interpolation=cv2.INTER_AREA)
-                img_rgb = cv2.resize(img_rgb, (new_w, new_h), interpolation=cv2.INTER_AREA)
-
-            self.gray_img = gray
-            self.original_img = Image.fromarray(img_rgb)
-            self.filtered_img = None
-
-            self._show_original()
-            self._clear_filtered()
-
-        except Exception as e:
-            messagebox.showerror("Error", str(e))
+        # Tampilkan gambar (resize sedikit untuk tampilan UI jika perlu, tapi data tetap 512)
+        self.show_img(self.lbl_original, self.original_img)
+        self.lbl_filtered.config(image="")
 
     def reset_image(self):
-        if self.original_img is None:
-            return
-        self.filtered_img = None
-        self._show_original()
-        self._clear_filtered()
+        if self.original_img:
+            self.show_img(self.lbl_original, self.original_img)
+            self.lbl_filtered.config(image="")
 
-    def _show_original(self):
-        if self.original_img is None:
-            return
-        img = self.original_img.copy()
-        self.original_tk = ImageTk.PhotoImage(img)
-        self.lbl_original.configure(image=self.original_tk)
-
-    def _show_filtered(self):
-        if self.filtered_img is None:
-            return
-        img = self.filtered_img.copy()
-        self.filtered_tk = ImageTk.PhotoImage(img)
-        self.lbl_filtered.configure(image=self.filtered_tk)
-
-    def _clear_filtered(self):
-        self.lbl_filtered.configure(image="", text="")
-
-    # ===================== Proses Filter Frekuensi =====================
+    def show_img(self, lbl, pil):
+        # Kita resize sedikit untuk tampilan UI agar rapi (350px),
+        # namun data asli (self.gray_img) tetap 512x512 untuk pemrosesan.
+        display_img = pil.resize((350, 350), Image.LANCZOS)
+        tk_img = ImageTk.PhotoImage(display_img)
+        lbl.config(image=tk_img)
+        lbl.image = tk_img
 
     def apply_filter(self):
-        if self.gray_img is None:
-            messagebox.showwarning("Peringatan", "Silakan buka gambar terlebih dahulu.")
-            return
+        if self.gray_img is None: return
+        d0, n = self.d0_var.get(), self.n_var.get()
 
-        try:
-            d0 = float(self.d0_var.get())
-            if d0 <= 0:
-                raise ValueError("Cutoff (D0) harus > 0")
-        except Exception:
-            messagebox.showerror("Error", "Nilai cutoff (D0) tidak valid.")
-            return
+        # Proses FFT (Gambar input sudah pasti 512x512)
+        f = np.fft.fftshift(np.fft.fft2(self.gray_img))
 
-        filter_type = self.filter_type_var.get()
-        pass_type = self.pass_type_var.get()
-        try:
-            n = int(self.n_var.get())
-        except Exception:
-            n = 1
-        n = max(1, n)  # minimal 1
-
-        # Normalisasi [0,1]
-        img = self.gray_img.copy()
-        img_norm = img / 255.0
-
-        # DFT 2D + shift ke tengah
-        F = np.fft.fft2(img_norm)
-        F_shift = np.fft.fftshift(F)
-
-        # Buat filter H(u,v)
-        H = self._create_filter(img.shape, d0, filter_type, pass_type, n)
-
-        # Terapkan filter
-        G_shift = F_shift * H
-
-        # Kembali ke ruang spasial
-        G = np.fft.ifft2(np.fft.ifftshift(G_shift))
-        g = np.abs(G)
-
-        # Normalisasi hasil ke [0,255]
-        g_min, g_max = g.min(), g.max()
-        g_norm = (g - g_min) / (g_max - g_min + 1e-8)
-        g_uint8 = (g_norm * 255).astype(np.uint8)
-
-        # Simpan sebagai gambar PIL (grayscale -> mode "L")
-        self.filtered_img = Image.fromarray(g_uint8, mode="L")
-        self._show_filtered()
-
-    def _create_filter(self, shape, d0, filter_type, pass_type, n):
-        rows, cols = shape
+        rows, cols = self.gray_img.shape
         crow, ccol = rows // 2, cols // 2
-
-        # Matriks jarak D(u,v) dari pusat
         u = np.arange(rows)
         v = np.arange(cols)
-        V, U = np.meshgrid(v, u)
-        D = np.sqrt((U - crow) ** 2 + (V - ccol) ** 2)
+        U, V = np.meshgrid(v, u)
+        D = np.sqrt((U - ccol) ** 2 + (V - crow) ** 2)
 
-        filter_type = filter_type.lower()
-        pass_type = pass_type.lower()
+        ft = self.filter_type_var.get()
+        if ft == "Ideal":
+            H = (D <= d0)
+        elif ft == "Butterworth":
+            H = 1 / (1 + (D / d0) ** (2 * n))
+        elif ft == "Gaussian":
+            H = np.exp(-(D ** 2) / (2 * d0 ** 2))
 
-        # ---------- Lowpass dasar ----------
-        if filter_type == "ideal":
-            # Ideal Lowpass
-            H = (D <= d0).astype(np.float32)
+        if self.pass_type_var.get() == "Highpass": H = 1 - H
 
-        elif filter_type == "butterworth":
-            # Butterworth Lowpass
-            H = 1.0 / (1.0 + (D / (d0 + 1e-8)) ** (2 * n))
-
-        elif filter_type == "gaussian":
-            # Gaussian Lowpass
-            H = np.exp(-(D ** 2) / (2 * (d0 ** 2 + 1e-8)))
-        else:
-            # default Ideal kalau salah input
-            H = (D <= d0).astype(np.float32)
-
-        # ---------- Ubah ke Highpass jika diminta ----------
-        if pass_type == "highpass":
-            H = 1.0 - H
-
-        return H.astype(np.float32)
-
-
-if __name__ == "__main__":
-    root = tk.Tk()
-    app = FrequencyFilterApp(root)
-    root.mainloop()
+        g = np.abs(np.fft.ifft2(np.fft.ifftshift(f * H)))
+        g = np.clip(g, 0, 255).astype(np.uint8)
+        self.show_img(self.lbl_filtered, Image.fromarray(g))

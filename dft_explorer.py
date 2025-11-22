@@ -3,167 +3,98 @@ from tkinter import ttk, messagebox
 import numpy as np
 from PIL import Image, ImageTk
 import cv2
+from base_frame import BaseFrame
+from styles import COLORS
 
-APP_TITLE = "2-D DFT Viewer"
 IMG_H, IMG_W = 512, 512
 RECT_H, RECT_W = 20, 40
 
 
-def generate_spatial_image(h=IMG_H, w=IMG_W, rect_h=RECT_H, rect_w=RECT_W, angle=0.0, invert=False):
-    img = np.zeros((h, w), dtype=np.float32)
-    cy, cx = h // 2, w // 2
-    y0, y1 = cy - rect_h // 2, cy + rect_h // 2
-    x0, x1 = cx - rect_w // 2, cx + rect_w // 2
-    img[y0:y1, x0:x1] = 1.0
+class DftApp(BaseFrame):
+    def __init__(self, parent):
+        super().__init__(parent)
 
-    M = cv2.getRotationMatrix2D((cx, cy), angle, 1.0)
-    img = cv2.warpAffine(img, M, (w, h), flags=cv2.INTER_LINEAR)
+        content = self.create_header("Transformasi Fourier",
+                                     "Eksplorasi spektrum frekuensi citra 2D (Spasial vs Frekuensi).")
 
-    if invert:
-        img = 1.0 - img
+        content.columnconfigure(0, weight=1)
+        content.columnconfigure(1, weight=1)
+        content.columnconfigure(2, weight=1)
+        content.rowconfigure(0, weight=1)
 
-    img = np.clip(img, 0.0, 1.0)
-    return img
+        # KIRI: Spasial
+        left_frame = tk.Frame(content, bg="white")
+        left_frame.grid(row=0, column=0, sticky="nsew", padx=10)
+        tk.Label(left_frame, text="Gambar Spasial", bg="white", fg="#4B5563", font=("Segoe UI", 11, "bold")).pack(
+            pady=10)
 
+        self.left_panel = tk.Label(left_frame, bg="#000000", bd=1, relief="solid")
+        self.left_panel.pack(expand=True, padx=10, fill="both")
 
-def to_u8(a):
-    a = a - a.min()
-    mx = a.max()
-    if mx > 0:
-        a = a / mx
-    return (a * 255).astype(np.uint8)
+        # TENGAH: Kontrol
+        mid_frame = tk.Frame(content, bg="white")
+        mid_frame.grid(row=0, column=1, sticky="ns", padx=20)
 
+        ttk.Label(mid_frame, text="Kontrol Objek", style="H2.TLabel").pack(pady=(10, 20))
 
-def compute_spectrum(img):
-    F = np.fft.fft2(img)
-    F = np.fft.fftshift(F)
-    mag = np.abs(F)
-    mag_log = np.log1p(mag)
-    return mag_log
+        # Slider Frame
+        slider_frame = tk.Frame(mid_frame, bg=COLORS["bg_main"], padx=10, pady=10)
+        slider_frame.pack(fill="x", pady=10)
 
-
-class DftApp:
-    def __init__(self, root):
-        self.root = root
-        self.root.title(APP_TITLE)
-        self.root.configure(bg="#111")
-        self.root.geometry("1300x600")
-        self.root.resizable(False, False)
-
-        self.left_imgtk = None
-        self.right_imgtk = None
-
+        tk.Label(slider_frame, text="Rotasi (°)", bg=COLORS["bg_main"]).pack(anchor="w")
         self.angle_var = tk.DoubleVar(value=0.0)
+        self.angle_lbl = tk.Label(slider_frame, text="0.0°", bg=COLORS["bg_main"], fg=COLORS["primary"],
+                                  font=("Segoe UI", 10, "bold"))
+        self.angle_lbl.pack(anchor="e")
+        ttk.Scale(slider_frame, from_=-90, to=90, variable=self.angle_var, command=self._update_ui).pack(fill="x")
+
         self.invert_var = tk.BooleanVar(value=False)
+        ttk.Checkbutton(mid_frame, text="Invert Warna", variable=self.invert_var).pack(pady=15, anchor="w")
 
-        wrapper = ttk.Frame(self.root, padding=10)
-        wrapper.pack(fill="both", expand=True)
+        ttk.Button(mid_frame, text="▶ Terapkan", command=self.apply_changes, style="Primary.TButton").pack(fill="x",
+                                                                                                           pady=5)
+        ttk.Button(mid_frame, text="↺ Reset", command=self.on_reset, style="Danger.TButton").pack(fill="x", pady=5)
 
-        left = ttk.Frame(wrapper)
-        settings = ttk.Frame(wrapper)
-        right = ttk.Frame(wrapper)
+        # KANAN: Frekuensi
+        right_frame = tk.Frame(content, bg="white")
+        right_frame.grid(row=0, column=2, sticky="nsew", padx=10)
+        tk.Label(right_frame, text="Spektrum Frekuensi (DFT)", bg="white", fg="#4B5563",
+                 font=("Segoe UI", 11, "bold")).pack(pady=10)
 
-        left.grid(row=0, column=0, sticky="nsew", padx=(0, 10))
-        settings.grid(row=0, column=1, sticky="ns", padx=10)
-        right.grid(row=0, column=2, sticky="nsew")
+        self.right_panel = tk.Label(right_frame, bg="#000000", bd=1, relief="solid")
+        self.right_panel.pack(expand=True, padx=10, fill="both")
 
-        wrapper.columnconfigure(0, weight=1)
-        wrapper.columnconfigure(1, weight=0)
-        wrapper.columnconfigure(2, weight=1)
-        wrapper.rowconfigure(0, weight=1)
-
-        # --- Panel Kiri (Gambar Spasial) ---
-        self.lbl_left_title = ttk.Label(left, text=f"Spatial Image", font=("Segoe UI", 11, "bold"))
-        self.lbl_left_title.pack(pady=(0, 5))
-        self.left_panel = ttk.Label(left)
-        self.left_panel.pack()
-
-        # --- Panel Pengaturan (Tengah) ---
-        settings_frame = ttk.LabelFrame(settings, text="Pengaturan Spasial")
-        settings_frame.pack(pady=5, fill="x")
-
-        ttk.Label(settings_frame, text="Rotasi (Derajat):").pack(padx=10, pady=(10, 0))
-        self.angle_label = ttk.Label(settings_frame, text="0.0°")
-        self.angle_label.pack(padx=10)
-        angle_slider = ttk.Scale(settings_frame, from_=-90, to=90, variable=self.angle_var, orient="horizontal",
-                                 command=self._update_angle_label)
-        angle_slider.pack(padx=10, fill="x", expand=True)
-
-        chk_invert = ttk.Checkbutton(settings_frame, text="Tukar Warna (Invert)", variable=self.invert_var)
-        chk_invert.pack(padx=10, pady=10)
-
-        btn_apply = ttk.Button(settings_frame, text="Terapkan Pengaturan", command=self.apply_changes)
-        btn_apply.pack(padx=10, pady=5, fill="x")
-
-        # --- Tombol Reset Baru ---
-        btn_reset = ttk.Button(settings_frame, text="Reset", command=self.on_reset)
-        btn_reset.pack(padx=10, pady=5, fill="x")
-        # -------------------------
-
-        # --- Panel Kanan (Spektrum) ---
-        self.lbl_right_title = ttk.Label(right, text="Centered 2-D DFT Magnitude (log)", font=("Segoe UI", 11, "bold"))
-        self.lbl_right_title.pack(pady=(0, 5))
-        self.right_panel = ttk.Label(right, text="Klik 'Terapkan Pengaturan' untuk menampilkan.", anchor="center")
-        self.right_panel.pack()
-
-        # Buat gambar & spektrum awal
         self.apply_changes()
 
-    def _update_angle_label(self, value_str):
-        val = self.angle_var.get()
-        self.angle_label.configure(text=f"{val:.1f}°")
+    def _update_ui(self, val):
+        self.angle_lbl.config(text=f"{float(val):.1f}°")
 
-    def apply_changes(self):
-        # 1. Dapatkan nilai pengaturan terbaru
-        angle = self.angle_var.get()
-        invert = self.invert_var.get()
-
-        # 2. Buat gambar spasial baru
-        self.img_np = generate_spatial_image(angle=angle, invert=invert)
-
-        # 3. Tampilkan di panel kiri
-        self.show_left(self.img_np)
-
-        # 4. Hitung dan tampilkan spektrum di panel kanan
-        self.on_view()
-
-    # --- Fungsi Baru untuk Reset ---
     def on_reset(self):
-        # 1. Atur ulang variabel
         self.angle_var.set(0.0)
         self.invert_var.set(False)
-
-        # 2. Perbarui label sudut secara manual
-        self.angle_label.configure(text="0.0°")
-
-        # 3. Terapkan perubahan (ini akan memperbarui kedua gambar)
+        self._update_ui(0)
         self.apply_changes()
 
-    # -------------------------------
+    def apply_changes(self):
+        img = np.zeros((IMG_H, IMG_W), dtype=np.float32)
+        cy, cx = IMG_H // 2, IMG_W // 2
+        img[cy - RECT_H // 2:cy + RECT_H // 2, cx - RECT_W // 2:cx + RECT_W // 2] = 1.0
 
-    def show_left(self, img_np):
-        im = Image.fromarray(to_u8(img_np), mode="L").resize((512, 512), Image.NEAREST)
-        self.left_imgtk = ImageTk.PhotoImage(im)
-        self.left_panel.configure(image=self.left_imgtk)
+        M = cv2.getRotationMatrix2D((cx, cy), self.angle_var.get(), 1.0)
+        img = cv2.warpAffine(img, M, (IMG_W, IMG_H), flags=cv2.INTER_LINEAR)
+        if self.invert_var.get(): img = 1.0 - img
+        img = np.clip(img, 0.0, 1.0)
 
-    def on_view(self):
-        try:
-            spec = compute_spectrum(self.img_np)
-            im = Image.fromarray(to_u8(spec), mode="L").resize((512, 512), Image.NEAREST)
-            self.right_imgtk = ImageTk.PhotoImage(im)
-            self.right_panel.configure(image=self.right_imgtk, text="")
-        except Exception as e:
-            messagebox.showerror("Error", str(e))
+        self.show_img(self.left_panel, img)
 
+        F = np.fft.fftshift(np.fft.fft2(img))
+        mag = np.log1p(np.abs(F))
+        mag_norm = cv2.normalize(mag, None, 0, 1, cv2.NORM_MINMAX)
+        self.show_img(self.right_panel, mag_norm)
 
-if __name__ == "__main__":
-    try:
-        import ctypes
-
-        ctypes.windll.shcore.SetProcessDpiAwareness(1)
-    except Exception:
-        pass
-
-    root = tk.Tk()
-    app = DftApp(root)
-    root.mainloop()
+    def show_img(self, panel, img_float):
+        img_u8 = (img_float * 255).astype(np.uint8)
+        pil = Image.fromarray(img_u8).resize((250, 250))
+        tk_img = ImageTk.PhotoImage(pil)
+        panel.config(image=tk_img)
+        panel.image = tk_img
