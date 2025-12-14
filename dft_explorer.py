@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import ttk, messagebox
+from tkinter import ttk, filedialog, messagebox
 import numpy as np
 from PIL import Image, ImageTk
 import cv2
@@ -13,6 +13,8 @@ RECT_H, RECT_W = 20, 40
 class DftApp(BaseFrame):
     def __init__(self, parent):
         super().__init__(parent)
+        
+        self.custom_img = None # Variable to store loaded image
 
         content = self.create_header("Transformasi Fourier",
                                      "Eksplorasi spektrum frekuensi citra 2D (Spasial vs Frekuensi).")
@@ -40,6 +42,9 @@ class DftApp(BaseFrame):
         # Slider Frame
         slider_frame = tk.Frame(mid_frame, bg=COLORS["bg_main"], padx=10, pady=10)
         slider_frame.pack(fill="x", pady=10)
+        
+        # New Button for Image Input
+        ttk.Button(slider_frame, text="📂 Buka Gambar", command=self.open_image, style="Primary.TButton").pack(fill="x", pady=(0, 15))
 
         tk.Label(slider_frame, text="Rotasi (°)", bg=COLORS["bg_main"]).pack(anchor="w")
         self.angle_var = tk.DoubleVar(value=0.0)
@@ -51,8 +56,8 @@ class DftApp(BaseFrame):
         self.invert_var = tk.BooleanVar(value=False)
         ttk.Checkbutton(mid_frame, text="Invert Warna", variable=self.invert_var).pack(pady=15, anchor="w")
 
-        ttk.Button(mid_frame, text="▶ Terapkan", command=self.apply_changes, style="Primary.TButton").pack(fill="x",
-                                                                                                           pady=5)
+        ttk.Button(mid_frame, text="▶ Terapkan", command=self.apply_changes, style="Soft.TButton").pack(fill="x",
+                                                                                                            pady=5)
         ttk.Button(mid_frame, text="↺ Reset", command=self.on_reset, style="Danger.TButton").pack(fill="x", pady=5)
 
         # KANAN: Frekuensi
@@ -65,22 +70,47 @@ class DftApp(BaseFrame):
         self.right_panel.pack(expand=True, padx=10, fill="both")
 
         self.apply_changes()
+    
+    def open_image(self):
+        path = filedialog.askopenfilename(filetypes=[("Image files", "*.jpg;*.jpeg;*.png;*.bmp")])
+        if not path: return
+        
+        img_bgr = cv2.imread(path)
+        if img_bgr is None:
+            messagebox.showerror("Error", "Gagal membuka gambar.")
+            return
+
+        # Resize to 512x512 and Grayscale
+        img_bgr_resized = cv2.resize(img_bgr, (IMG_W, IMG_H))
+        img_gray = cv2.cvtColor(img_bgr_resized, cv2.COLOR_BGR2GRAY)
+        
+        # Normalize to 0.0 - 1.0 range
+        self.custom_img = img_gray.astype(np.float32) / 255.0
+        self.apply_changes()
 
     def _update_ui(self, val):
         self.angle_lbl.config(text=f"{float(val):.1f}°")
 
     def on_reset(self):
+        self.custom_img = None # Reset custom image
         self.angle_var.set(0.0)
         self.invert_var.set(False)
         self._update_ui(0)
         self.apply_changes()
 
     def apply_changes(self):
-        img = np.zeros((IMG_H, IMG_W), dtype=np.float32)
-        cy, cx = IMG_H // 2, IMG_W // 2
-        img[cy - RECT_H // 2:cy + RECT_H // 2, cx - RECT_W // 2:cx + RECT_W // 2] = 1.0
+        if self.custom_img is not None:
+             # Use custom image
+            img = self.custom_img.copy()
+        else:
+            # No default image (Black/Blank)
+            img = np.zeros((IMG_H, IMG_W), dtype=np.float32)
+            
+            # Optional: Add text to left panel to say "Open Image" if needed, 
+            # but for now, just black as per "no default" request.
 
-        M = cv2.getRotationMatrix2D((cx, cy), self.angle_var.get(), 1.0)
+        M = cv2.getRotationMatrix2D((IMG_W // 2, IMG_H // 2), self.angle_var.get(), 1.0)
+        
         img = cv2.warpAffine(img, M, (IMG_W, IMG_H), flags=cv2.INTER_LINEAR)
         if self.invert_var.get(): img = 1.0 - img
         img = np.clip(img, 0.0, 1.0)

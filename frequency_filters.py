@@ -26,8 +26,8 @@ class FrequencyFilterApp(BaseFrame):
 
         ttk.Label(row2, text="Jenis Filter:", style="Sub.TLabel").pack(side="left")
         self.filter_type_var = tk.StringVar(value="Ideal")
-        ttk.Combobox(row2, textvariable=self.filter_type_var, values=["Ideal", "Butterworth", "Gaussian"],
-                     state="readonly", width=12).pack(side="left", padx=(5, 15))
+        ttk.Combobox(row2, textvariable=self.filter_type_var, values=["Ideal", "Butterworth", "Gaussian", "Mean Removal"],
+                     state="readonly", width=14).pack(side="left", padx=(5, 15))
 
         ttk.Label(row2, text="Mode:", style="Sub.TLabel").pack(side="left")
         self.pass_type_var = tk.StringVar(value="Lowpass")
@@ -111,14 +111,27 @@ class FrequencyFilterApp(BaseFrame):
         D = np.sqrt((U - ccol) ** 2 + (V - crow) ** 2)
 
         ft = self.filter_type_var.get()
-        if ft == "Ideal":
-            H = (D <= d0)
-        elif ft == "Butterworth":
-            H = 1 / (1 + (D / d0) ** (2 * n))
-        elif ft == "Gaussian":
-            H = np.exp(-(D ** 2) / (2 * d0 ** 2))
-
-        if self.pass_type_var.get() == "Highpass": H = 1 - H
+        if ft == "Mean Removal":
+             # EXPLICIT LOGIC: All 1s, except 0 at center.
+             # This sets F(0,0) = 0 and passes everything else.
+             # This overrides "Lowpass/Highpass" selection logic.
+             H = np.ones((rows, cols), dtype=np.float32)
+             H[crow, ccol] = 0.0
+             
+             # Apply directly without flipping
+             pass
+        else:
+            # Standard Filters
+            if ft == "Ideal":
+                H = (D <= d0)
+            elif ft == "Butterworth":
+                H = 1 / (1 + (D / d0) ** (2 * n))
+            elif ft == "Gaussian":
+                H = np.exp(-(D ** 2) / (2 * d0 ** 2))
+            
+            # Apply Highpass toggle for standard filters
+            if self.pass_type_var.get() == "Highpass": 
+                H = 1 - H
 
         g = np.abs(np.fft.ifft2(np.fft.ifftshift(f * H)))
         g = np.clip(g, 0, 255).astype(np.uint8)

@@ -5,16 +5,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="190c2e49-f92b-4c6f-9bf5-6287a320d672" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/base_frame.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/styles.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/dft_explorer.py" beforeDir="false" afterPath="$PROJECT_DIR$/dft_explorer.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frequency_filters.py" beforeDir="false" afterPath="$PROJECT_DIR$/frequency_filters.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/image_view.py" beforeDir="false" afterPath="$PROJECT_DIR$/image_view.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/index.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/mach_and_band_effect.py" beforeDir="false" afterPath="$PROJECT_DIR$/mach_and_band_effect.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/program3_single_pixel.py" beforeDir="false" afterPath="$PROJECT_DIR$/program3_single_pixel.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -42,31 +33,31 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "Python.dft_explorer.executor": "Run",
-    "Python.frames.executor": "Run",
-    "Python.frequency_filters.executor": "Run",
-    "Python.image_view.executor": "Run",
-    "Python.index.executor": "Run",
-    "Python.mach_and_band_effect.executor": "Run",
-    "Python.main.executor": "Run",
-    "Python.program3_single_pixel.executor": "Run",
-    "Python.styles.executor": "Run",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "git-widget-placeholder": "main",
-    "ignore.virus.scanning.warn.message": "true",
-    "last_opened_file_path": "C:/Users/Riki Daniel/Documents/GitHub/tugas-advanced-image-processing",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;Python.dft_explorer.executor&quot;: &quot;Run&quot;,
+    &quot;Python.frames.executor&quot;: &quot;Run&quot;,
+    &quot;Python.frequency_filters.executor&quot;: &quot;Run&quot;,
+    &quot;Python.image_view.executor&quot;: &quot;Run&quot;,
+    &quot;Python.index.executor&quot;: &quot;Run&quot;,
+    &quot;Python.mach_and_band_effect.executor&quot;: &quot;Run&quot;,
+    &quot;Python.main.executor&quot;: &quot;Run&quot;,
+    &quot;Python.program3_single_pixel.executor&quot;: &quot;Run&quot;,
+    &quot;Python.styles.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
+    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/Riki Daniel/Documents/GitHub/tugas-advanced-image-processing&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
@@ -85,7 +76,10 @@
       <workItem from="1762871255552" duration="706000" />
       <workItem from="1762872214551" duration="5000" />
       <workItem from="1763781134830" duration="1354000" />
-      <workItem from="1763784816501" duration="8305000" />
+      <workItem from="1763784816501" duration="8359000" />
+      <workItem from="1764076039732" duration="22000" />
+      <workItem from="1764382636424" duration="4583000" />
+      <workItem from="1765383402273" duration="7000" />
     </task>
     <servers />
   </component>
@@ -97,7 +91,7 @@
     <SUITE FILE_PATH="coverage/tugas_advanced_image_processing$frames.coverage" NAME="frames Coverage Results" MODIFIED="1763787006673" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/tugas_advanced_image_processing$dft_explorer.coverage" NAME="dft_explorer Coverage Results" MODIFIED="1763787333798" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/tugas_advanced_image_processing$frequency_filters.coverage" NAME="frequency_filters Coverage Results" MODIFIED="1763787348349" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/tugas_advanced_image_processing$main.coverage" NAME="main Coverage Results" MODIFIED="1763794251959" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/tugas_advanced_image_processing$main.coverage" NAME="main Coverage Results" MODIFIED="1764384557957" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/tugas_advanced_image_processing$mach_and_band_effect.coverage" NAME="mach_and_band_effect Coverage Results" MODIFIED="1763785959109" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/tugas_advanced_image_processing$image_view.coverage" NAME="image_view Coverage Results" MODIFIED="1763785901284" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/tugas_advanced_image_processing$styles.coverage" NAME="styles Coverage Results" MODIFIED="1763787002542" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />

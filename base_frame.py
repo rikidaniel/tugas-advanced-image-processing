@@ -8,40 +8,92 @@ class BaseFrame(ttk.Frame):
         super().__init__(parent, style="Main.TFrame")
         self.grid(row=0, column=0, sticky="nsew")
 
-        # Grid layout untuk memusatkan kartu di tengah
         self.columnconfigure(0, weight=1)
-        self.columnconfigure(1, weight=30)  # Area konten utama lebih lebar
-        self.columnconfigure(2, weight=1)
-        self.rowconfigure(0, weight=1)  # Spacer atas
-        self.rowconfigure(1, weight=20)  # Konten
-        self.rowconfigure(2, weight=1)  # Spacer bawah
+        self.rowconfigure(0, weight=1)
+
+        # --- SCROLLABLE CONTAINER ---
+        self.main_scroll_canvas = tk.Canvas(self, bg=COLORS["bg_main"], highlightthickness=0)
+        self.scrollbar = ttk.Scrollbar(self, orient="vertical", command=self.main_scroll_canvas.yview)
+        
+        # Link scrollbar to canvas
+        self.main_scroll_canvas.configure(yscrollcommand=self.scrollbar.set)
+
+        # Place widgets
+        self.main_scroll_canvas.grid(row=0, column=0, sticky="nsew")
+        self.scrollbar.grid(row=0, column=1, sticky="ns")
+
+        # Container Frame INSIDE Canvas
+        # This acts as the actual parent for your content
+        self.scrollable_content = ttk.Frame(self.main_scroll_canvas, style="Main.TFrame")
+        
+        # Window in canvas
+        self.canvas_window = self.main_scroll_canvas.create_window(
+            (0, 0), window=self.scrollable_content, anchor="nw"
+        )
+
+        # Bind events
+        self.scrollable_content.bind("<Configure>", self._on_frame_configure)
+        self.main_scroll_canvas.bind("<Configure>", self._on_canvas_configure)
+        
+        # Enable mousewheel scrolling
+        self.bind_all("<MouseWheel>", self._on_mousewheel)
+
+        # --- GRID LAYOUT FOR THE INNER CONTENT ---
+        # Same logic as before, but applied to scrollable_content
+        self.scrollable_content.columnconfigure(0, weight=1)
+        self.scrollable_content.columnconfigure(1, weight=30)  # Main Content Wider
+        self.scrollable_content.columnconfigure(2, weight=1)
+        self.scrollable_content.rowconfigure(0, weight=0) # Top Spacer
+        self.scrollable_content.rowconfigure(1, weight=1) # Content
 
         # Kartu Putih (Container Utama)
-        self.card = ttk.Frame(self, style="Card.TFrame")
-        self.card.grid(row=1, column=1, sticky="nsew", pady=20)
+        self.card = ttk.Frame(self.scrollable_content, style="Card.TFrame")
+        self.card.grid(row=1, column=1, sticky="nsew", pady=30, padx=10)
 
         # Grid di dalam kartu
         self.card.columnconfigure(0, weight=1)
         self.card.rowconfigure(1, weight=1)
 
+    def _on_frame_configure(self, event=None):
+        """Update scroll region to match content size"""
+        self.main_scroll_canvas.configure(scrollregion=self.main_scroll_canvas.bbox("all"))
+
+    def _on_canvas_configure(self, event=None):
+        """Ensure inner frame matches canvas width"""
+        canvas_width = event.width
+        self.main_scroll_canvas.itemconfig(self.canvas_window, width=canvas_width)
+
+    def _on_mousewheel(self, event):
+        """Scroll with mousewheel"""
+        # Only scroll if needed
+        if self.main_scroll_canvas.winfo_height() < self.scrollable_content.winfo_height():
+            self.main_scroll_canvas.yview_scroll(int(-1*(event.delta/120)), "units")
+
     def create_header(self, title, subtitle):
         # Header Area
         header_frame = ttk.Frame(self.card, style="Card.TFrame")
-        header_frame.grid(row=0, column=0, sticky="ew", padx=30, pady=(30, 10))
+        header_frame.grid(row=0, column=0, sticky="ew", padx=40, pady=(40, 20))
 
-        # Dekorasi garis hijau kecil di atas judul
-        deco_line = tk.Frame(header_frame, bg=COLORS["primary"], height=4, width=50)
-        deco_line.pack(anchor="w", pady=(0, 10))
+        # Dekorasi garis elegan
+        # deco_bg = tk.Frame(header_frame, bg=COLORS["border"], height=1)
+        # deco_bg.pack(fill="x", pady=(0, 15))
 
         # Judul & Subjudul
-        ttk.Label(header_frame, text=title, style="H1.TLabel").pack(anchor="w")
-        ttk.Label(header_frame, text=subtitle, style="Body.TLabel").pack(anchor="w", pady=(5, 0))
+        lbl_title = ttk.Label(header_frame, text=title, style="H1.TLabel")
+        lbl_title.pack(anchor="w")
+        
+        lbl_sub = ttk.Label(header_frame, text=subtitle, style="Body.TLabel")
+        lbl_sub.pack(anchor="w", pady=(5, 0))
+
+        # Accent Line under text
+        accent_line = tk.Frame(header_frame, bg=COLORS["active_indicator"], height=3, width=60)
+        accent_line.pack(anchor="w", pady=(15, 0))
 
         # Garis pemisah halus
-        sep = tk.Frame(header_frame, bg="#E5E7EB", height=1)
+        sep = tk.Frame(header_frame, bg=COLORS["border"], height=1)
         sep.pack(fill="x", pady=(20, 0))
 
         # Area Konten Spesifik Program
         content_frame = ttk.Frame(self.card, style="Card.TFrame")
-        content_frame.grid(row=1, column=0, sticky="nsew", padx=30, pady=(10, 30))
+        content_frame.grid(row=1, column=0, sticky="nsew", padx=40, pady=(10, 40))
         return content_frame
