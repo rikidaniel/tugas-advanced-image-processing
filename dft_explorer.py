@@ -7,14 +7,12 @@ from base_frame import BaseFrame
 from styles import COLORS
 
 IMG_H, IMG_W = 512, 512
-RECT_H, RECT_W = 20, 40
-
 
 class DftApp(BaseFrame):
     def __init__(self, parent):
         super().__init__(parent)
         
-        self.custom_img = None # Variable to store loaded image
+        self.custom_img = None 
 
         content = self.create_header("Transformasi Fourier",
                                      "Eksplorasi spektrum frekuensi citra 2D (Spasial vs Frekuensi).")
@@ -27,8 +25,7 @@ class DftApp(BaseFrame):
         # KIRI: Spasial
         left_frame = tk.Frame(content, bg="white")
         left_frame.grid(row=0, column=0, sticky="nsew", padx=10)
-        tk.Label(left_frame, text="Gambar Spasial", bg="white", fg="#4B5563", font=("Segoe UI", 11, "bold")).pack(
-            pady=10)
+        tk.Label(left_frame, text="Gambar Spasial", bg="white", fg="#4B5563", font=("Segoe UI", 11, "bold")).pack(pady=10)
 
         self.left_panel = tk.Label(left_frame, bg="#000000", bd=1, relief="solid")
         self.left_panel.pack(expand=True, padx=10, fill="both")
@@ -43,7 +40,6 @@ class DftApp(BaseFrame):
         slider_frame = tk.Frame(mid_frame, bg=COLORS["bg_main"], padx=10, pady=10)
         slider_frame.pack(fill="x", pady=10)
         
-        # New Button for Image Input
         ttk.Button(slider_frame, text="📂 Buka Gambar", command=self.open_image, style="Primary.TButton").pack(fill="x", pady=(0, 15))
 
         tk.Label(slider_frame, text="Rotasi (°)", bg=COLORS["bg_main"]).pack(anchor="w")
@@ -56,8 +52,7 @@ class DftApp(BaseFrame):
         self.invert_var = tk.BooleanVar(value=False)
         ttk.Checkbutton(mid_frame, text="Invert Warna", variable=self.invert_var).pack(pady=15, anchor="w")
 
-        ttk.Button(mid_frame, text="▶ Terapkan", command=self.apply_changes, style="Soft.TButton").pack(fill="x",
-                                                                                                            pady=5)
+        ttk.Button(mid_frame, text="▶ Terapkan", command=self.apply_changes, style="Soft.TButton").pack(fill="x", pady=5)
         ttk.Button(mid_frame, text="↺ Reset", command=self.on_reset, style="Danger.TButton").pack(fill="x", pady=5)
 
         # KANAN: Frekuensi
@@ -72,7 +67,8 @@ class DftApp(BaseFrame):
         self.apply_changes()
     
     def open_image(self):
-        path = filedialog.askopenfilename(filetypes=[("Image files", "*.jpg;*.jpeg;*.png;*.bmp")])
+        # [Perbaikan] Menambahkan *.tiff dan *.tif
+        path = filedialog.askopenfilename(filetypes=[("Image files", "*.jpg;*.jpeg;*.png;*.bmp;*.tiff;*.tif")])
         if not path: return
         
         img_bgr = cv2.imread(path)
@@ -80,11 +76,9 @@ class DftApp(BaseFrame):
             messagebox.showerror("Error", "Gagal membuka gambar.")
             return
 
-        # Resize to 512x512 and Grayscale
         img_bgr_resized = cv2.resize(img_bgr, (IMG_W, IMG_H))
         img_gray = cv2.cvtColor(img_bgr_resized, cv2.COLOR_BGR2GRAY)
         
-        # Normalize to 0.0 - 1.0 range
         self.custom_img = img_gray.astype(np.float32) / 255.0
         self.apply_changes()
 
@@ -92,7 +86,7 @@ class DftApp(BaseFrame):
         self.angle_lbl.config(text=f"{float(val):.1f}°")
 
     def on_reset(self):
-        self.custom_img = None # Reset custom image
+        self.custom_img = None
         self.angle_var.set(0.0)
         self.invert_var.set(False)
         self._update_ui(0)
@@ -100,14 +94,12 @@ class DftApp(BaseFrame):
 
     def apply_changes(self):
         if self.custom_img is not None:
-             # Use custom image
             img = self.custom_img.copy()
         else:
-            # No default image (Black/Blank)
+            # Default: Rectangle 20x40 (PDF Hal 13)
             img = np.zeros((IMG_H, IMG_W), dtype=np.float32)
-            
-            # Optional: Add text to left panel to say "Open Image" if needed, 
-            # but for now, just black as per "no default" request.
+            # Gambar kotak putih di tengah
+            cv2.rectangle(img, (IMG_W//2 - 10, IMG_H//2 - 20), (IMG_W//2 + 10, IMG_H//2 + 20), 1.0, -1)
 
         M = cv2.getRotationMatrix2D((IMG_W // 2, IMG_H // 2), self.angle_var.get(), 1.0)
         

@@ -35,7 +35,8 @@ class ImageViewerApp(BaseFrame):
         self.tk_img = None
 
     def open_image(self):
-        path = filedialog.askopenfilename(filetypes=[("Image files", "*.jpg;*.jpeg;*.png;*.bmp;*.tiff")])
+        # [Perbaikan] Menambahkan *.tiff dan *.tif agar konsisten dengan modul lain
+        path = filedialog.askopenfilename(filetypes=[("Image files", "*.jpg;*.jpeg;*.png;*.bmp;*.tiff;*.tif")])
         if not path: return
 
         img = cv2.imread(path)

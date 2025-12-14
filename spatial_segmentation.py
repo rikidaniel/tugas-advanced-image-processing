@@ -40,6 +40,17 @@ class SpatialSegmentationApp(BaseFrame):
         self.cb_filter = ttk.Combobox(row2, textvariable=self.filter_var, state="readonly", width=25)
         self.cb_filter.pack(side="left", padx=(5, 15))
         
+        # [Perbaikan] Row 3: Threshold Slider (Hidden by default)
+        self.thresh_frame = tk.Frame(ctrl_frame, bg="white")
+        # Jangan di-pack dulu, nanti dipack dinamis
+        tk.Label(self.thresh_frame, text="Threshold:", bg="white").pack(side="left")
+        self.thresh_val = tk.IntVar(value=50)
+        self.thresh_scale = ttk.Scale(self.thresh_frame, from_=0, to=255, variable=self.thresh_val, orient="horizontal", length=200)
+        self.thresh_scale.pack(side="left", padx=5)
+        self.lbl_thresh = tk.Label(self.thresh_frame, text="50", bg="white", width=3)
+        self.lbl_thresh.pack(side="left")
+        self.thresh_scale.configure(command=lambda v: self.lbl_thresh.config(text=f"{int(float(v))}"))
+
         # Apply Button
         ttk.Button(row2, text="▶ Apply", command=self.apply_filter, style="Soft.TButton").pack(side="left", padx=20)
         
@@ -73,24 +84,28 @@ class SpatialSegmentationApp(BaseFrame):
     def update_filter_types(self, event=None):
         category = self.category_var.get()
         if category == "Smoothing":
-            options = ["Averaging 3x3", "Averaging 5x5", "Averaging 7x7", "Averaging 9x9", "Averaging 15x15", "Averaging 35x35", "Median 3x3", "Median 5x5"]
+            options = ["Averaging 3x3", "Averaging 5x5", "Averaging 9x9", "Averaging 15x15", "Averaging 35x35", "Median 3x3", "Median 5x5"]
+            self.thresh_frame.pack_forget() # Sembunyikan slider
         elif category == "Sharpening":
             options = ["Laplacian", "Sobel Gradient"]
+            self.thresh_frame.pack_forget()
         elif category == "Segmentation":
             options = ["Point Detection", "Line: Horizontal", "Line: Vertical", "Line: +45 Degree", "Line: -45 Degree"]
+            # [Perbaikan] Tampilkan slider threshold untuk segmentasi
+            self.thresh_frame.pack(fill="x", pady=(5, 0), after=self.cb_filter.master) 
         else:
             options = []
+            self.thresh_frame.pack_forget()
             
         self.cb_filter['values'] = options
         if options:
             self.cb_filter.current(0)
 
     def open_image(self):
-        path = filedialog.askopenfilename(filetypes=[("Image Files", "*.png;*.jpg;*.jpeg;*.bmp;*.tiff")])
-        if not path:
-            return
+        # [Perbaikan] Tambah Support TIFF
+        path = filedialog.askopenfilename(filetypes=[("Image Files", "*.png;*.jpg;*.jpeg;*.bmp;*.tiff;*.tif")])
+        if not path: return
             
-        # Read image using OpenCV
         img = cv2.imread(path)
         if img is None:
             messagebox.showerror("Error", "Gagal memuat gambar.")
@@ -106,27 +121,19 @@ class SpatialSegmentationApp(BaseFrame):
         self.lbl_result.image = None
 
     def display_image(self, cv_img, label_widget):
-        if cv_img is None:
-            return
+        if cv_img is None: return
             
         try:
-            # Convert BGR (OpenCV) to RGB (PIL)
-            # Check if grayscale
             if len(cv_img.shape) == 2:
                 img_rgb = cv2.cvtColor(cv_img, cv2.COLOR_GRAY2RGB)
             else:
                 img_rgb = cv2.cvtColor(cv_img, cv2.COLOR_BGR2RGB)
                 
             pil_img = Image.fromarray(img_rgb)
-            
-            # Resize for display (Preserve aspect ratio roughly or fixed width)
-            # Using fixed size similar to frequency_filters.py logic for consistency
-            display_size = (400, 400)
-            pil_img.thumbnail(display_size, Image.LANCZOS)
-            
+            pil_img.thumbnail((400, 400), Image.LANCZOS)
             tk_img = ImageTk.PhotoImage(pil_img)
             label_widget.config(image=tk_img)
-            label_widget.image = tk_img # Keep reference
+            label_widget.image = tk_img 
         except Exception as e:
             print(f"Error displaying image: {e}")
 
@@ -138,10 +145,8 @@ class SpatialSegmentationApp(BaseFrame):
         category = self.category_var.get()
         filter_type = self.filter_var.get()
         
-        # Ensure we work on a copy
         img_src = self.original_img_cv.copy()
         
-        # Automatic grayscale conversion for Segmentation and Laplacian
         needs_grayscale = category == "Segmentation" or (category == "Sharpening" and "Laplacian" in filter_type)
         if needs_grayscale and len(img_src.shape) == 3:
             img_src = cv2.cvtColor(img_src, cv2.COLOR_BGR2GRAY)
@@ -152,29 +157,22 @@ class SpatialSegmentationApp(BaseFrame):
             # --- SMOOTHING ---
             if category == "Smoothing":
                 if "Averaging" in filter_type:
-                    # Extract k from "Averaging KxK"
                     k_str = filter_type.split()[1] # "3x3"
                     k = int(k_str.split('x')[0])
                     result = cv2.blur(img_src, (k, k))
                 elif "Median" in filter_type:
-                    k = int(filter_type.split()[1][0]) # Extract 3 or 5
+                    k = int(filter_type.split()[1][0])
                     result = cv2.medianBlur(img_src, k)
                     
             # --- SHARPENING ---
             elif category == "Sharpening":
                 if "Laplacian" in filter_type:
-                    # Using cv2.Laplacian or custom kernel. 
                     result = cv2.Laplacian(img_src, cv2.CV_64F)
                     result = cv2.convertScaleAbs(result) 
                 
                 elif "Sobel Gradient" in filter_type:
                     grad_x = cv2.Sobel(img_src, cv2.CV_64F, 1, 0, ksize=3)
                     grad_y = cv2.Sobel(img_src, cv2.CV_64F, 0, 1, ksize=3)
-                    abs_grad_x = cv2.convertScaleAbs(grad_x)
-                    abs_grad_y = cv2.convertScaleAbs(grad_y)
-                    # Approx Magnitude = 0.5*|dx| + 0.5*|dy|, or proper magnitude
-                    # PDF usually implies magnitude = sqrt(dx^2 + dy^2) or sum of abs
-                    # Using cv2.magnitude for correctness
                     mag = cv2.magnitude(grad_x, grad_y)
                     result = cv2.convertScaleAbs(mag)
                     
@@ -186,32 +184,32 @@ class SpatialSegmentationApp(BaseFrame):
                     kernel = np.array([[-1, -1, -1], 
                                        [-1,  8, -1], 
                                        [-1, -1, -1]])
-                
                 elif filter_type == "Line: Horizontal":
                     kernel = np.array([[-1, -1, -1], 
                                        [ 2,  2,  2], 
                                        [-1, -1, -1]])
-                                       
                 elif filter_type == "Line: Vertical":
                     kernel = np.array([[-1,  2, -1], 
                                        [-1,  2, -1], 
                                        [-1,  2, -1]])
-                                       
                 elif filter_type == "Line: +45 Degree":
                     kernel = np.array([[-1, -1,  2], 
                                        [-1,  2, -1], 
                                        [ 2, -1, -1]])
-                                       
                 elif filter_type == "Line: -45 Degree":
                     kernel = np.array([[ 2, -1, -1], 
                                        [-1,  2, -1], 
                                        [-1, -1,  2]])
                 
                 if kernel is not None:
-                    # Apply kernel using filter2D
-                    # Use CV_64F to handle negative values, then take absolute
-                    processed = cv2.filter2D(img_src, cv2.CV_64F, kernel)
-                    result = cv2.convertScaleAbs(processed)
+                    # 1. Apply Filter
+                    filtered = cv2.filter2D(img_src, cv2.CV_64F, kernel)
+                    abs_filtered = cv2.convertScaleAbs(filtered)
+                    
+                    # 2. Thresholding (PENTING: PDF Hal 17)
+                    # [Perbaikan] Menggunakan nilai dari slider
+                    thresh_val = self.thresh_val.get()
+                    _, result = cv2.threshold(abs_filtered, thresh_val, 255, cv2.THRESH_BINARY)
 
             self.processed_img_cv = result
             self.display_image(self.processed_img_cv, self.lbl_result)

@@ -67,7 +67,8 @@ class FrequencyFilterApp(BaseFrame):
         self.original_img = None
 
     def open_image(self):
-        path = filedialog.askopenfilename()
+        # [Perbaikan] Tambah Support TIFF
+        path = filedialog.askopenfilename(filetypes=[("Image Files", "*.png;*.jpg;*.jpeg;*.bmp;*.tiff;*.tif")])
         if not path: return
         img_bgr = cv2.imread(path)
         if img_bgr is None: return

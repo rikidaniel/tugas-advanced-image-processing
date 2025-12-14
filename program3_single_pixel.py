@@ -101,8 +101,11 @@ class SinglePixelApp(BaseFrame):
                 
             ttk.Scale(f, from_=min_val, to=max_val, variable=var, command=on_change).pack(fill="x")
 
+        # [Perbaikan] Rentang Gamma 0.1 - 5.0 (PDF Hal 4 c=0.3, 0.4, 0.6)
         create_float_slider(self.tab_gamma, "Gamma (\u03B3)", self.gamma_var, 0.1, 5.0, 0.1)
-        create_float_slider(self.tab_gamma, "Constant (c)", self.const_var, 0.5, 2.0, 0.1)
+        
+        # [Perbaikan] Rentang Constant (c) dinaikkan ke 5.0 agar sesuai PDF Hal 3 (c=1, 3, 4, 5)
+        create_float_slider(self.tab_gamma, "Constant (c)", self.const_var, 0.1, 5.0, 0.1)
 
         # --- Controls for Tab 3 (Slicing) ---
         self.slice_a = tk.IntVar(value=100) # Range Min
@@ -239,7 +242,8 @@ class SinglePixelApp(BaseFrame):
         self.plot_label.config(image=self.tk_plot, height=H)
 
     def open_image(self):
-        path = filedialog.askopenfilename()
+        # [Perbaikan] Tambah Support TIFF
+        path = filedialog.askopenfilename(filetypes=[("Image Files", "*.png;*.jpg;*.jpeg;*.bmp;*.tiff;*.tif")])
         if not path: return
         raw = cv2.imread(path, cv2.IMREAD_UNCHANGED)
         if raw is None: return
@@ -278,8 +282,6 @@ class SinglePixelApp(BaseFrame):
         self.r2.set(int(np.percentile(self.img_gray, 95)))
         self.s1.set(0)
         self.s2.set(255)
-        # If active tab is not Linear, switch to it? Or just set params.
-        # User might expect it to switch.
         self.notebook.select(0)
         self._update_preview()
 
@@ -336,12 +338,8 @@ class SinglePixelApp(BaseFrame):
         
         # Logic
         if preserve:
-            # Inside [A,B] -> 255. Outside -> Keep Original (do nothing)
             img[mask] = 255
         else:
-            # Inside [A,B] -> 255. Outside -> 0
-            # Easiest: Set all to 0, then restore Mask to 255? Ref says slice highlight.
-            # Usually: Highlight = 255. Background = 0.
             out = np.zeros_like(img)
             out[mask] = 255
             img = out

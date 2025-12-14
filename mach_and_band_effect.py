@@ -11,25 +11,30 @@ class MachBandApp(BaseFrame):
     def __init__(self, parent):
         super().__init__(parent)
 
-        content = self.create_header("Efek Mach Band", "Simulasi ilusi optik gradasi intensitas cahaya.")
+        content = self.create_header("Mach Band & Brightness", "Simulasi ilusi optik Mach Band dan Adaptasi Kecerahan.")
 
         # Tombol Aksi Pusat
         ctrl_frame = tk.Frame(content, bg="white")
         ctrl_frame.pack(fill="x", pady=20)
 
+        # [Perbaikan] Tambah tombol Brightness Adaptation
         ttk.Button(ctrl_frame, text="✨ Generate Mach Band",
-                   command=self.show_mach_band, style="Primary.TButton").pack(anchor="center")
+                   command=self.show_mach_band, style="Primary.TButton").pack(side="left", padx=(0, 10), expand=True)
+        
+        ttk.Button(ctrl_frame, text="👁️ Brightness Adaptation",
+                   command=self.show_brightness_adaptation, style="Soft.TButton").pack(side="left", expand=True)
 
         # Area Tampil
         preview_frame = tk.Frame(content, bg=COLORS["bg_main"], bd=2, relief="flat")
         preview_frame.pack(fill="both", expand=True)
 
-        self.canvas = tk.Label(preview_frame, bg=COLORS["bg_main"], text="Tekan tombol di atas untuk memulai",
+        self.canvas = tk.Label(preview_frame, bg=COLORS["bg_main"], text="Pilih simulasi di atas",
                                fg="#6B7280", font=("Segoe UI", 12))
         self.canvas.pack(fill="both", expand=True, padx=2, pady=2)
         self.tk_img = None
 
     def show_mach_band(self):
+        # ... (Logika Mach Band Tetap Sama)
         w = 560
         border = 1
         h_band = 120
@@ -68,9 +73,35 @@ class MachBandApp(BaseFrame):
         combined = cv2.copyMakeBorder(combined, 15, 15, 15, 15, cv2.BORDER_CONSTANT, value=255)
         combined = cv2.copyMakeBorder(combined, 2, 2, 2, 2, cv2.BORDER_CONSTANT, value=0)
 
-        pil_img = Image.fromarray(combined)
+        self._display_final(Image.fromarray(combined), "Mach Band Effect")
 
-        # Tambah Header Text pada Gambar
+    def show_brightness_adaptation(self):
+        # [Perbaikan] Fitur Baru: Simultaneous Contrast
+        w, h = 600, 400
+        img = np.zeros((h, w), dtype=np.uint8)
+        
+        # Split Background: Kiri Gelap (50), Kanan Terang (200)
+        img[:, :w//2] = 50
+        img[:, w//2:] = 200
+        
+        # Kotak Kecil di tengah: Intensitas SAMA (125)
+        box_size = 80
+        center_y = h // 2
+        center_x_left = w // 4
+        center_x_right = (w // 4) * 3
+        
+        # Gambar kotak kiri
+        img[center_y-box_size//2 : center_y+box_size//2, 
+            center_x_left-box_size//2 : center_x_left+box_size//2] = 125
+            
+        # Gambar kotak kanan
+        img[center_y-box_size//2 : center_y+box_size//2, 
+            center_x_right-box_size//2 : center_x_right+box_size//2] = 125
+            
+        self._display_final(Image.fromarray(img), "Brightness Adaptation (Simultaneous Contrast)")
+
+    def _display_final(self, pil_img, title_text):
+        # Helper untuk menampilkan gambar dengan header
         header_height = 40
         total_width = pil_img.width
         final_img = Image.new('RGB', (total_width, pil_img.height + header_height), 'white')
@@ -82,7 +113,7 @@ class MachBandApp(BaseFrame):
         except:
             font = ImageFont.load_default()
 
-        text = "mach band effect"
+        text = title_text
         bbox = draw.textbbox((0, 0), text, font=font)
         text_w, text_h = bbox[2] - bbox[0], bbox[3] - bbox[1]
         text_x, text_y = (total_width - text_w) // 2, (header_height - text_h) // 2
