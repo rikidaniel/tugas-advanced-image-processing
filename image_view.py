@@ -10,23 +10,24 @@ class ImageViewerApp(BaseFrame):
     def __init__(self, parent):
         super().__init__(parent)
 
-        content = self.create_header("Penampil Citra", "Membuka dan menampilkan citra dalam mode Warna atau Grayscale.")
+        # [PERBAIKAN] Judul Header Konsisten (English)
+        content = self.create_header("Image Viewer", "Open and view images in RGB or Grayscale mode.")
 
         # Toolbar di atas
         toolbar = tk.Frame(content, bg="white")
         toolbar.pack(fill="x", pady=(0, 20))
 
-        ttk.Button(toolbar, text="📂 Buka Gambar", command=self.open_image, style="Primary.TButton").pack(side="left",
+        ttk.Button(toolbar, text="📂 Open Image", command=self.open_image, style="Primary.TButton").pack(side="left",
                                                                                                          padx=(0, 10))
-        ttk.Button(toolbar, text="Mode Grayscale", command=self.show_gray, style="Soft.TButton").pack(side="left",
+        ttk.Button(toolbar, text="Grayscale Mode", command=self.show_gray, style="Soft.TButton").pack(side="left",
                                                                                                       padx=5)
-        ttk.Button(toolbar, text="Mode Warna", command=self.show_color, style="Soft.TButton").pack(side="left", padx=5)
+        ttk.Button(toolbar, text="Color Mode", command=self.show_color, style="Soft.TButton").pack(side="left", padx=5)
 
         # Area Canvas (Dengan Border Hijau Tipis)
         canvas_frame = tk.Frame(content, bg=COLORS["bg_main"], bd=2, relief="flat")
         canvas_frame.pack(fill="both", expand=True)
 
-        self.canvas = tk.Label(canvas_frame, bg=COLORS["bg_main"], text="Belum ada gambar yang dipilih",
+        self.canvas = tk.Label(canvas_frame, bg=COLORS["bg_main"], text="No image selected",
                                fg="#6B7280", font=("Segoe UI", 12))
         self.canvas.pack(fill="both", expand=True, padx=2, pady=2)
 
@@ -35,13 +36,12 @@ class ImageViewerApp(BaseFrame):
         self.tk_img = None
 
     def open_image(self):
-        # [Perbaikan] Menambahkan *.tiff dan *.tif agar konsisten dengan modul lain
         path = filedialog.askopenfilename(filetypes=[("Image files", "*.jpg;*.jpeg;*.png;*.bmp;*.tiff;*.tif")])
         if not path: return
 
         img = cv2.imread(path)
         if img is None:
-            messagebox.showerror("Error", "Gagal membuka gambar.")
+            messagebox.showerror("Error", "Failed to open image.")
             return
 
         self.img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
@@ -50,13 +50,13 @@ class ImageViewerApp(BaseFrame):
 
     def show_gray(self):
         if self.img_gray is None:
-            messagebox.showwarning("Info", "Silakan buka gambar terlebih dahulu.")
+            messagebox.showwarning("Info", "Please open an image first.")
             return
         self.show_on_canvas(self.img_gray, is_gray=True)
 
     def show_color(self):
         if self.img_rgb is None:
-            messagebox.showwarning("Info", "Silakan buka gambar terlebih dahulu.")
+            messagebox.showwarning("Info", "Please open an image first.")
             return
         self.show_on_canvas(self.img_rgb)
 
