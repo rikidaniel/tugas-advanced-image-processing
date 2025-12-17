@@ -10,8 +10,8 @@ from styles import COLORS
 class SinglePixelApp(BaseFrame):
     def __init__(self, parent):
         super().__init__(parent)
-        content = self.create_header("Image Negative, Power-Law & Slicing",
-                                     "Operasi Titik: Intensity Transformations sesuai Topik PDF.")
+        content = self.create_header("Intensity Transformations",
+                                     "Operasi Titik: Negative, Power-Law & Slicing.")
 
         content.columnconfigure(0, weight=3)
         content.columnconfigure(1, weight=1)
@@ -53,15 +53,20 @@ class SinglePixelApp(BaseFrame):
         self.tab_slice = ttk.Frame(self.notebook, padding=10)
         self.notebook.add(self.tab_slice, text="Slicing")
 
-        # Tab 1: Negative
-        ttk.Button(self.tab_neg, text="🔄 Apply Image Negative", command=self.negative_image,
-                   style="Primary.TButton").pack(fill="x", pady=20)
+        # --- Tab 1: Negative (MODIFIKASI CHECKBOX) ---
+        self.neg_var = tk.BooleanVar(value=False)
+        # Menggunakan Checkbutton agar harus diklik/dicentang dulu baru aktif
+        ttk.Checkbutton(self.tab_neg, text="Aktifkan Image Negative", variable=self.neg_var,
+                        command=self._update_preview).pack(fill="x", pady=20)
+
+        ttk.Label(self.tab_neg, text="*Centang kotak di atas untuk\nmelihat efek negatif.",
+                  style="Sub.TLabel", foreground="#888").pack(anchor="w", padx=5)
 
         # Tab 2: Power-Law (Gamma)
         self.gamma_var = tk.DoubleVar(value=1.0)
         self.const_var = tk.DoubleVar(value=1.0)
 
-        # [FITUR BARU] Preset Gamma sesuai PDF Page 3
+        # Preset Gamma sesuai PDF Page 3
         preset_frame = tk.Frame(self.tab_power)
         preset_frame.pack(fill="x", pady=(0, 10))
         tk.Label(preset_frame, text="Presets (PDF Page 3):", fg="#666", font=("Segoe UI", 8)).pack(anchor="w")
@@ -117,9 +122,9 @@ class SinglePixelApp(BaseFrame):
                                                                                                            pady=5)
         ttk.Button(btn_frame, text="↺ Reset", command=self.reset_view, style="Danger.TButton").pack(fill="x", pady=5)
 
-        self.img_bgr = None;
+        self.img_bgr = None
         self.img_gray = None
-        self.tk_ori = None;
+        self.tk_ori = None
         self.tk_out = None
         self._draw_transfer_plot()
 
@@ -163,7 +168,12 @@ class SinglePixelApp(BaseFrame):
             return int(H - (val / 255 * H))
 
         if tab_idx == 0:
-            d.line([(0, 0), (W, H)], fill=COLORS["primary"], width=3)
+            # Jika mode checkbox negative:
+            if self.neg_var.get():
+                d.line([(0, 0), (W, H)], fill=COLORS["primary"], width=3)  # Garis Negatif (Turun)
+            else:
+                d.line([(0, H), (W, 0)], fill="#CCC", width=2)  # Garis Identitas (Naik/Normal)
+
         elif tab_idx == 1:
             gamma = self.gamma_var.get()
             c = self.const_var.get()
@@ -199,35 +209,42 @@ class SinglePixelApp(BaseFrame):
         self._update_preview()
 
     def reset_view(self):
-        self.gamma_var.set(1.0);
+        self.neg_var.set(False)
+        self.gamma_var.set(1.0)
         self.const_var.set(1.0)
-        self.slice_a.set(100);
+        self.slice_a.set(100)
         self.slice_b.set(180)
         self.notebook.select(0)
         self._update_preview()
 
-    def negative_image(self):
-        self._update_preview()
-
     def _apply_negative(self):
-        self.tk_out = self._to_tk(255 - self.img_gray)
+        # [MODIFIKASI] Cek status checkbox
+        if self.neg_var.get():
+            # Jika dicentang -> Terapkan Negatif
+            self.tk_out = self._to_tk(255 - self.img_gray)
+        else:
+            # Jika TIDAK dicentang -> Tampilkan gambar asli (grayscale)
+            self.tk_out = self._to_tk(self.img_gray)
+
         self.lbl_out.config(image=self.tk_out)
 
     def _apply_gamma(self):
-        gamma = self.gamma_var.get();
+        gamma = self.gamma_var.get()
         c = self.const_var.get()
         table = np.array([((i / 255.0) ** gamma) * 255 * c for i in range(256)]).astype("uint8")
         self.tk_out = self._to_tk(cv2.LUT(self.img_gray, table))
         self.lbl_out.config(image=self.tk_out)
 
     def _apply_slicing(self):
-        a, b = self.slice_a.get(), self.slice_b.get();
+        a, b = self.slice_a.get(), self.slice_b.get()
         if b < a: b = a
-        img = self.img_gray.copy();
+        img = self.img_gray.copy()
         mask = (img >= a) & (img <= b)
         if self.slice_preserve.get():
             img[mask] = 255
         else:
-            out = np.zeros_like(img); out[mask] = 255; img = out
+            out = np.zeros_like(img);
+            out[mask] = 255;
+            img = out
         self.tk_out = self._to_tk(img)
         self.lbl_out.config(image=self.tk_out)

@@ -28,28 +28,6 @@ class MainApp(tk.Tk):
         self.grid_columnconfigure(1, weight=1)
         self.grid_rowconfigure(0, weight=1)
 
-        # --- DATABASE PENCARIAN (Mapping Keyword -> Menu & Instruksi) ---
-        self.search_index = {
-            "mach": (MachBandApp, "Buka Menu 02.\nKlik tombol 'Generate Mach Band'."),
-            "bright": (MachBandApp, "Buka Menu 02.\nKlik tombol 'Brightness Adaptation'."),
-            "resolu": (ResHistApp, "Buka Menu 07 (Tab 1).\nUbah dropdown 'Target Resolusi'."),
-            "quantiz": (ResHistApp, "Buka Menu 07 (Tab 1).\nGeser slider 'Jumlah Level'."),
-            "negat": (SinglePixelApp, "Buka Menu 03 (Tab 1).\nKlik tombol 'Image Negative'."),
-            "gamma": (SinglePixelApp, "Buka Menu 03 (Tab 2).\nMainkan slider Gamma dan Constant."),
-            "power": (SinglePixelApp, "Buka Menu 03 (Tab 2).\nFitur Power-Law adalah Gamma Correction."),
-            "slicing": (SinglePixelApp, "Buka Menu 03 (Tab 3).\nMainkan slider Range A dan B."),
-            "clahe": (ResHistApp, "Buka Menu 07 (Tab 2).\nKlik tombol 'Local Histogram Eq.'."),
-            "local": (ResHistApp, "Buka Menu 07 (Tab 2).\nKlik tombol 'Local Histogram Eq.'."),
-            "equal": (ResHistApp, "Buka Menu 07 (Tab 2).\nKlik tombol 'Global Histogram Eq.'."),
-            "smooth": (SpatialSegmentationApp, "Buka Menu 06.\nPilih Kategori 'Smoothing'."),
-            "sharp": (SpatialSegmentationApp, "Buka Menu 06.\nPilih Kategori 'Sharpening' (Laplacian)."),
-            "laplac": (SpatialSegmentationApp, "Buka Menu 06.\nPilih Kategori 'Sharpening' -> Filter Laplacian."),
-            "point": (SpatialSegmentationApp, "Buka Menu 06.\nPilih Kategori 'Segmentation' -> Point Detection."),
-            "line": (SpatialSegmentationApp, "Buka Menu 06.\nPilih Kategori 'Segmentation' -> Line Detection."),
-            "dft": (DftApp, "Buka Menu 04.\nKlik 'Apply Transform'."),
-            "freq": (FrequencyFilterApp, "Buka Menu 05.\nPilih Ideal/Butterworth/Gaussian.")
-        }
-
         # --- SIDEBAR (KIRI) ---
         self.sidebar = tk.Frame(self, bg=COLORS["sidebar_bg"], width=320)
         self.sidebar.grid(row=0, column=0, sticky="ns")
@@ -57,44 +35,28 @@ class MainApp(tk.Tk):
 
         # Logo / Judul Sidebar
         logo_area = tk.Frame(self.sidebar, bg=COLORS["sidebar_bg"])
-        logo_area.pack(fill="x", padx=20, pady=(40, 20))
+        logo_area.pack(fill="x", padx=20, pady=(40, 40))  # Padding disesuaikan setelah search dihapus
 
         tk.Label(logo_area, text="IMAGE", bg=COLORS["sidebar_bg"], fg=COLORS["sidebar_fg"],
                  font=("Segoe UI", 24, "bold"), anchor="w").pack(fill="x")
         tk.Label(logo_area, text="PROCESSING", bg=COLORS["sidebar_bg"], fg=COLORS["primary"],
                  font=("Segoe UI", 24, "bold"), anchor="w").pack(fill="x")
 
-        # --- FITUR PENCARIAN ---
-        search_frame = tk.Frame(self.sidebar, bg=COLORS["sidebar_bg"])
-        search_frame.pack(fill="x", padx=20, pady=(0, 20))
-
-        tk.Label(search_frame, text="🔍 Cari Topik / Filter:", bg=COLORS["sidebar_bg"], fg="#A0A0A0",
-                 font=("Segoe UI", 9)).pack(anchor="w", pady=(0, 5))
-
-        self.search_var = tk.StringVar()
-        self.entry_search = tk.Entry(search_frame, textvariable=self.search_var, font=("Segoe UI", 11), bg="white",
-                                     relief="flat", bd=5)
-        self.entry_search.pack(fill="x", side="left", expand=True)
-        self.entry_search.bind("<Return>", self.perform_search)
-
-        btn_go = tk.Button(search_frame, text="GO", command=self.perform_search, bg=COLORS["primary"], fg="white",
-                           relief="flat", font=("Segoe UI", 9, "bold"))
-        btn_go.pack(side="right", fill="y", padx=(5, 0))
-
         # Menu Container
         self.menu_container = tk.Frame(self.sidebar, bg=COLORS["sidebar_bg"])
         self.menu_container.pack(fill="both", expand=True, padx=0)
 
-        # Daftar Menu [SESUAI TOPIK PDF]
+        # Daftar Menu [DIURUTKAN SESUAI PDF & NAMA GARIS BESAR]
+        # Urutan: Visual -> Res/Hist -> Intensity -> Arithmetic -> Spatial -> Freq
         self.menus = [
-            ("01", "Penampil Citra (Viewer)", ImageViewerApp),
-            ("02", "Mach Band Effect & Brightness", MachBandApp),
-            ("03", "Image Negative, Power-Law & Slicing", SinglePixelApp),
-            ("04", "2-D DFT Spectrum", DftApp),
-            ("05", "Frequency Domain Filtering", FrequencyFilterApp),
-            ("06", "Spatial Filtering & Segmentation", SpatialSegmentationApp),
-            ("07", "Spatial Resolution, Quantization & Hist", ResHistApp),
-            ("08", "Arithmetic & Logic Operations", ArithmeticApp)
+            ("01", "Image Viewer", ImageViewerApp),
+            ("02", "Visual Perception", MachBandApp),           # Topik PDF Hal 1
+            ("03", "Resolution & Histogram", ResHistApp),       # Topik PDF Hal 1, 2, 5
+            ("04", "Intensity Transformations", SinglePixelApp),# Topik PDF Hal 3-4
+            ("05", "Arithmetic Operations", ArithmeticApp),     # Topik PDF Hal 7-9
+            ("06", "Spatial Filters & Segmentation", SpatialSegmentationApp), # Topik PDF Hal 10-12, 17
+            ("07", "DFT Spectrum", DftApp),                     # Topik PDF Hal 13
+            ("08", "Frequency Filtering", FrequencyFilterApp)   # Topik PDF Hal 14-16
         ]
 
         self.btn_refs = []
@@ -168,27 +130,6 @@ class MainApp(tk.Tk):
             btn.lbl_name.config(bg=bg, fg=fg_name, font=("Segoe UI", 10, font_weight))
 
         self.current_frame = frame_class(self.content_area)
-
-    def perform_search(self, event=None):
-        query = self.search_var.get().lower().strip()
-        if not query:
-            return
-
-        found = False
-        for keyword, (app_class, instruction) in self.search_index.items():
-            if keyword in query:
-                if app_class in self.menu_map:
-                    btn_target = self.menu_map[app_class]
-                    self.switch_frame(app_class, btn_target)
-
-                messagebox.showinfo("Hasil Pencarian", f"Topik ditemukan: '{query}'\n\nInstruksi:\n{instruction}")
-                found = True
-                self.entry_search.delete(0, tk.END)
-                break
-
-        if not found:
-            messagebox.showwarning("Tidak Ditemukan",
-                                   f"Maaf, topik '{query}' tidak ditemukan.\nCoba kata kunci lain.")
 
 
 if __name__ == "__main__":

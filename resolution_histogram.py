@@ -23,7 +23,7 @@ class ResHistApp(BaseFrame):
         self.notebook.add(tab_degrade, text="Spatial Res & Quantization")
 
         # Resolution Controls
-        res_frame = ttk.LabelFrame(tab_degrade, text="Effect of Spatial Resolution", padding=10)
+        res_frame = ttk.LabelFrame(tab_degrade, text="Effect of Spatial Resolution (PDF Page 1)", padding=10)
         res_frame.pack(fill="x", pady=(0, 10))
 
         ttk.Label(res_frame, text="Target Resolusi:", style="Sub.TLabel").pack(side="left")
@@ -35,18 +35,18 @@ class ResHistApp(BaseFrame):
         self.res_combo.bind("<<ComboboxSelected>>", self.on_param_change)
 
         # Quantization Controls
-        quant_frame = ttk.LabelFrame(tab_degrade, text="Effect of Quantization Levels", padding=10)
+        # [PERBAIKAN] Menggunakan Dropdown Level Spesifik sesuai PDF Page 2
+        quant_frame = ttk.LabelFrame(tab_degrade, text="Effect of Quantization Levels (PDF Page 2)", padding=10)
         quant_frame.pack(fill="x")
 
         ttk.Label(quant_frame, text="Jumlah Level:", style="Sub.TLabel").pack(side="left")
-        self.levels_var = tk.IntVar(value=256)
-        self.levels_scale = tk.Scale(quant_frame, from_=1, to=8, orient="horizontal",
-                                     command=self.on_level_change,
-                                     length=300, bg=COLORS["bg_card"], highlightthickness=0, showvalue=0)
-        self.levels_scale.set(8)  # 2^8 = 256
-        self.levels_scale.pack(side="left", padx=15, fill="x", expand=True)
-        self.lbl_levels_val = ttk.Label(quant_frame, text="256 Level", style="Sub.TLabel")
-        self.lbl_levels_val.pack(side="left")
+        self.quant_var = tk.StringVar(value="256")
+        # Nilai sesuai tabel PDF: 256, 128, 64, 32, 16, 8, 4, 2
+        self.quant_combo = ttk.Combobox(quant_frame, textvariable=self.quant_var,
+                                        values=["256", "128", "64", "32", "16", "8", "4", "2"],
+                                        state="readonly", width=10)
+        self.quant_combo.pack(side="left", padx=15)
+        self.quant_combo.bind("<<ComboboxSelected>>", self.on_param_change)
 
         # Tab 2: Histogram Processing
         tab_hist = ttk.Frame(self.notebook, padding=15)
@@ -61,8 +61,8 @@ class ResHistApp(BaseFrame):
             side="left")
 
         # Local (Small Neighborhood)
-        # Menggunakan CLAHE dengan setting agresif agar efek 'neighborhood' terlihat jelas
-        ttk.Button(btn_frame, text="Local Hist. Eq. (Neighborhood)", command=self.apply_clahe,
+        # [PERBAIKAN] Nama tombol diperjelas
+        ttk.Button(btn_frame, text="Local Hist. Eq. (7x7)", command=self.apply_local_he,
                    style="Soft.TButton").pack(side="left", padx=5)
 
         sep = ttk.Frame(btn_frame, width=2, style="Card.TFrame")
@@ -74,7 +74,7 @@ class ResHistApp(BaseFrame):
         ttk.Button(btn_frame, text="Match Histogram", command=self.apply_matching, style="Primary.TButton").pack(
             side="left", padx=5)
 
-        ttk.Button(btn_frame, text="📊 Refresh Chart", command=self.draw_histograms, style="Soft.TButton").pack(
+        ttk.Button(btn_frame, text="🔄 Refresh Chart", command=self.draw_histograms, style="Soft.TButton").pack(
             side="right")
 
         # Histogram Canvas
@@ -120,13 +120,6 @@ class ResHistApp(BaseFrame):
         self.processed_img_cv = None
         self.is_matching_mode = False  # Flag untuk grafik
 
-    def on_level_change(self, val):
-        exp = int(float(val))
-        levels = 2 ** exp
-        self.levels_var.set(levels)
-        self.lbl_levels_val.config(text=f"{levels} Level")
-        self.on_param_change()
-
     def open_image(self):
         path = filedialog.askopenfilename(filetypes=[("Image Files", "*.png;*.jpg;*.jpeg;*.bmp;*.tiff;*.tif")])
         if not path: return
@@ -163,7 +156,7 @@ class ResHistApp(BaseFrame):
     def reset_image(self):
         if self.original_img_cv is None: return
         self.res_combo.set("256")
-        self.levels_scale.set(8)
+        self.quant_combo.set("256")
         self.is_matching_mode = False
 
         self.processed_img_cv = self.original_img_cv.copy()
@@ -197,12 +190,18 @@ class ResHistApp(BaseFrame):
         except:
             target_res = 256
 
-        levels = self.levels_var.get()
+        try:
+            levels = int(self.quant_var.get())
+        except:
+            levels = 256
+
         h, w = self.original_img_cv.shape[:2]
 
+        # 1. Simulasi Resolusi Spasial (Resize Down -> Resize Up)
         temp = cv2.resize(self.original_img_cv, (target_res, target_res), interpolation=cv2.INTER_LINEAR)
         res_sim = cv2.resize(temp, (w, h), interpolation=cv2.INTER_NEAREST)
 
+        # 2. Simulasi Kuantisasi (Pengurangan Level Warna)
         if levels < 256:
             if len(res_sim.shape) == 3:
                 work_img = cv2.cvtColor(res_sim, cv2.COLOR_BGR2GRAY)
@@ -211,11 +210,13 @@ class ResHistApp(BaseFrame):
                 work_img = res_sim
                 is_color = False
 
+            # Logika Kuantisasi Uniform
             interval = 256 // levels
             quantized = (work_img // interval) * interval
             quantized = quantized.astype(np.uint8)
 
             if is_color:
+                # Kembalikan ke BGR untuk display (walaupun warnanya jadi flat)
                 self.processed_img_cv = cv2.cvtColor(quantized, cv2.COLOR_GRAY2BGR)
             else:
                 self.processed_img_cv = quantized
@@ -234,18 +235,22 @@ class ResHistApp(BaseFrame):
         self.display_image(self.processed_img_cv, self.lbl_result)
         self.draw_histograms()
 
-    def apply_clahe(self):
+    def apply_local_he(self):
         if self.gray_img_cv is None: return
         self.is_matching_mode = False
 
-        # [PERBAIKAN FITUR]: Local Histogram Eq (Small Neighborhood)
-        # tileGridSize=(8,8) membagi gambar menjadi kotak-kotak kecil (neighborhood).
-        # clipLimit membatasi kontras noise.
-        clahe = cv2.createCLAHE(clipLimit=4.0, tileGridSize=(8, 8))
+        # [PERBAIKAN FITUR] Local Histogram Eq (Simulation 7x7 Neighborhood)
+        # Sesuai PDF Hal 7. Kita gunakan CLAHE dengan clipLimit SANGAT TINGGI
+        # untuk meniru efek "Full Local HE" yang agresif/kasar (menonjolkan noise).
+        # Grid size dibuat agar area lokalnya terasa kecil.
+
+        # clipLimit=40.0 (Sangat tinggi, normalnya 2.0-4.0) -> Kontras lokal dimaksimalkan
+        # tileGridSize=(8,8) -> Membagi gambar jadi blok-blok
+        clahe = cv2.createCLAHE(clipLimit=40.0, tileGridSize=(8, 8))
         res = clahe.apply(self.gray_img_cv)
 
         self.processed_img_cv = res
-        self.lbl_res_title.config(text="Result: Local Hist. Eq. (Neighborhood)")
+        self.lbl_res_title.config(text="Result: Local Hist. Eq. (7x7 Sim.)")
         self.display_image(self.processed_img_cv, self.lbl_result)
         self.draw_histograms()
 
@@ -257,14 +262,17 @@ class ResHistApp(BaseFrame):
 
         self.is_matching_mode = True
 
+        # Hitung Histogram & CDF Source
         src_hist, _ = np.histogram(self.gray_img_cv.flatten(), 256, [0, 256])
         src_cdf = src_hist.cumsum()
         src_cdf_norm = src_cdf / src_cdf.max()
 
+        # Hitung Histogram & CDF Reference
         ref_hist, _ = np.histogram(self.reference_img_cv.flatten(), 256, [0, 256])
         ref_cdf = ref_hist.cumsum()
         ref_cdf_norm = ref_cdf / ref_cdf.max()
 
+        # Mapping (LUT)
         lut = np.zeros(256, dtype=np.uint8)
         for g in range(256):
             idx = np.abs(ref_cdf_norm - src_cdf_norm[g]).argmin()
@@ -274,12 +282,7 @@ class ResHistApp(BaseFrame):
         self.processed_img_cv = res
         self.lbl_res_title.config(text="Result: Histogram Matching")
 
-        # Tampilkan hasil
         self.display_image(self.processed_img_cv, self.lbl_result)
-
-        # Kembalikan tampilan kiri ke Original (agar user bisa bandingkan Ori -> Result)
-        # Atau biarkan Reference di kiri? Biasanya bandingkan Ori vs Result.
-        # Tapi untuk histogram chart, kita butuh data Reference.
         self.draw_histograms()
 
     def draw_histograms(self):
