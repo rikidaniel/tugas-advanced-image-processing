@@ -10,260 +10,476 @@ from base_frame import BaseFrame
 class SpatialSegmentationApp(BaseFrame):
     def __init__(self, parent):
         super().__init__(parent)
+        content = self.create_header("Spatial Filters (Pg 10-12)",
+                                     "Smoothing (Pg 10), Median (Pg 11), Sharpening & Gradient (Pg 11-12).")
 
-        content = self.create_header("Spatial Filtering & Segmentation",
-                                     "Smoothing, Sharpening, & Segmentation (Line/Point Detection).")
+        self.notebook = ttk.Notebook(content)
+        self.notebook.pack(fill="both", expand=True, pady=(0, 10))
 
-        # --- Control Panel ---
-        ctrl_frame = ttk.LabelFrame(content, text="Panel Kontrol", padding=15)
-        ctrl_frame.pack(fill="x", pady=(0, 20))
+        # --- Variables ---
+        self.smooth_src = None
+        self.smooth_res = {}
+        self.hubble_src = None
+        self.hubble_res = {}
+        self.median_src = None
+        self.sharp_src = None
 
-        # Row 1: Image Controls
-        row1 = ttk.Frame(ctrl_frame)
-        row1.pack(fill="x", pady=5)
-        ttk.Button(row1, text="📂 Buka Gambar", command=self.open_image, style="Primary.TButton").pack(side="left",
-                                                                                                      padx=(0, 15))
+        # Gradient Variables
+        self.grad_src = None
+        self.grad_res_cache = {}
+        self.grad_view_mode = tk.StringVar(value="Pg11")  # Default Pg11 sesuai request terakhir
 
-        ttk.Button(row1, text="🧂 Add Salt & Pepper", command=self.add_salt_pepper_noise,
-                   style="Soft.TButton").pack(side="left", padx=(0, 15))
+        # --- TABS ---
+        self.tab_smooth = ttk.Frame(self.notebook, padding=10)
+        self.notebook.add(self.tab_smooth, text="Pg 10: Smoothing")
+        self.setup_smoothing_tab()
 
-        ttk.Button(row1, text="↺ Reset", command=self.reset_image, style="Danger.TButton").pack(side="left")
+        self.tab_hubble = ttk.Frame(self.notebook, padding=10)
+        self.notebook.add(self.tab_hubble, text="Pg 10: Hubble")
+        self.setup_hubble_tab()
 
-        # Row 2: Filter Controls
-        row2 = ttk.Frame(ctrl_frame)
-        row2.pack(fill="x", pady=(20, 5))
+        self.tab_median = ttk.Frame(self.notebook, padding=10)
+        self.notebook.add(self.tab_median, text="Pg 11: Median")
+        self.setup_median_tab()
 
-        ttk.Label(row2, text="Kategori Operasi:", style="Sub.TLabel").pack(side="left")
-        self.category_var = tk.StringVar(value="Smoothing")
-        self.cb_category = ttk.Combobox(row2, textvariable=self.category_var, state="readonly", width=25)
-        # Penamaan kategori disesuaikan
-        self.cb_category['values'] = ["Smoothing (Lowpass)", "Sharpening (Highpass)", "Segmentation (Detection)"]
-        self.cb_category.pack(side="left", padx=(5, 15))
-        self.cb_category.bind("<<ComboboxSelected>>", self.update_filter_types)
+        self.tab_sharp = ttk.Frame(self.notebook, padding=10)
+        self.notebook.add(self.tab_sharp, text="Pg 11: Sharpening")
+        self.setup_sharpening_tab()
 
-        ttk.Label(row2, text="Jenis Filter:", style="Sub.TLabel").pack(side="left")
-        self.filter_var = tk.StringVar()
-        self.cb_filter = ttk.Combobox(row2, textvariable=self.filter_var, state="readonly", width=40)
-        self.cb_filter.pack(side="left", padx=(5, 15))
+        self.tab_grad = ttk.Frame(self.notebook, padding=10)
+        self.notebook.add(self.tab_grad, text="Pg 11-12: Gradient")
+        self.setup_gradient_tab()
 
-        # Slider Threshold (Hanya muncul saat Segmentation)
-        self.thresh_frame = tk.Frame(ctrl_frame, bg="white")
-        tk.Label(self.thresh_frame, text="Threshold:", bg="white").pack(side="left")
-        self.thresh_val = tk.IntVar(value=100)
-        self.thresh_scale = ttk.Scale(self.thresh_frame, from_=0, to=255, variable=self.thresh_val, orient="horizontal",
-                                      length=200)
-        self.thresh_scale.pack(side="left", padx=5)
-        self.lbl_thresh = tk.Label(self.thresh_frame, text="100", bg="white", width=3)
-        self.lbl_thresh.pack(side="left")
-        self.thresh_scale.configure(command=lambda v: self.lbl_thresh.config(text=f"{int(float(v))}"))
+    # =========================================================================
+    # TAB 1: SMOOTHING
+    # =========================================================================
+    def setup_smoothing_tab(self):
+        top = ttk.Frame(self.tab_smooth)
+        top.pack(fill="x", pady=10)
+        ttk.Button(top, text="📂 1. Load Source", command=self.load_smooth_src, style="Primary.TButton").pack(
+            side="left")
+        ttk.Button(top, text="▶ 2. Run Smoothing", command=self.run_smoothing_all, style="Soft.TButton").pack(
+            side="left", padx=10)
+        self.lbl_smooth_status = tk.Label(top, text="Load gambar...", fg="#666")
+        self.lbl_smooth_status.pack(side="left")
 
-        ttk.Button(row2, text="▶ Apply", command=self.apply_filter, style="Soft.TButton").pack(side="left", padx=20)
+        self.smooth_display = ttk.Frame(self.tab_smooth, style="Card.TFrame")
+        self.smooth_display.pack(fill="both", expand=True, padx=50, pady=10)
+        self.lbl_smooth_main = tk.Label(self.smooth_display, bg="#F1F5F9", text="No Image")
+        self.lbl_smooth_main.pack(fill="both", expand=True)
 
-        # --- Image Display Area ---
-        img_grid = ttk.Frame(content)
-        img_grid.pack(fill="both", expand=True)
-        img_grid.columnconfigure(0, weight=1)
-        img_grid.columnconfigure(1, weight=1)
+        btn_bar = ttk.Frame(self.tab_smooth)
+        btn_bar.pack(fill="x", pady=15)
 
-        f_left = ttk.Frame(img_grid, style="Card.TFrame")
-        f_left.grid(row=0, column=0, sticky="nsew", padx=(0, 10))
-        tk.Label(f_left, text="Original Image", bg="#F1F5F9", pady=8, font=("Segoe UI", 10, "bold")).pack(fill="x")
-        self.lbl_original = tk.Label(f_left, bg="#F1F5F9")
-        self.lbl_original.pack(fill="both", expand=True)
+        self.smooth_btns = {}
+        labels = [("Orig (a)", 'a'), ("3x3 (b)", 'b'), ("5x5 (c)", 'c'),
+                  ("9x9 (d)", 'd'), ("15x15 (e)", 'e'), ("35x35 (f)", 'f')]
 
-        f_right = ttk.Frame(img_grid, style="Card.TFrame")
-        f_right.grid(row=0, column=1, sticky="nsew", padx=(10, 0))
-        self.lbl_res_title = tk.Label(f_right, text="Processed Result", bg="#F1F5F9", pady=8,
-                                      font=("Segoe UI", 10, "bold"))
-        self.lbl_res_title.pack(fill="x")
-        self.lbl_result = tk.Label(f_right, bg="#F1F5F9")
-        self.lbl_result.pack(fill="both", expand=True)
+        for text, key in labels:
+            btn = ttk.Button(btn_bar, text=text, command=lambda k=key: self.show_smooth(k), state="disabled")
+            btn.pack(side="left", expand=True, fill="x", padx=2)
+            self.smooth_btns[key] = btn
 
-        self.original_img_cv = None
-        self.processed_img_cv = None
+        ttk.Button(btn_bar, text="💾 Save View", command=lambda: self.save_view(self.current_smooth_view, "smoothing"),
+                   style="Soft.TButton").pack(side="right", padx=10)
 
-        self.update_filter_types()
+    def load_smooth_src(self):
+        img = self._load_img()
+        if img is not None:
+            self.smooth_src = img
+            self.display_image_large(img, self.lbl_smooth_main)
+            self.lbl_smooth_status.config(text="Gambar siap. Klik Run.")
 
-    def update_filter_types(self, event=None):
-        category = self.category_var.get()
+    def run_smoothing_all(self):
+        if self.smooth_src is None: return
+        self.lbl_smooth_status.config(text="Processing...")
+        self.update()
+        src = self.smooth_src
+        self.smooth_res['a'] = src
+        sizes = [3, 5, 9, 15, 35]
+        keys = ['b', 'c', 'd', 'e', 'f']
+        for k_size, key in zip(sizes, keys):
+            res = cv2.blur(src, (k_size, k_size))
+            self.smooth_res[key] = res
+        for k in self.smooth_btns: self.smooth_btns[k].config(state="normal")
+        self.show_smooth('f')
+        self.lbl_smooth_status.config(text="Selesai.")
 
-        if "Smoothing" in category:
-            options = [
-                "Averaging Filter (Mean) 3x3",
-                "Averaging Filter (Mean) 5x5",
-                "Averaging Filter (Mean) 9x9",
-                "Averaging Filter (Mean) 15x15",
-                "Averaging Filter (Mean) 35x35",
-                "Median Filter 3x3",
-                "Median Filter 5x5"
-            ]
-            self.thresh_frame.pack_forget()
+    def show_smooth(self, key):
+        if key in self.smooth_res:
+            self.display_image_large(self.smooth_res[key], self.lbl_smooth_main)
+            self.current_smooth_view = self.smooth_res[key]
 
-        elif "Sharpening" in category:
-            # [PERBAIKAN] Nama Filter Sharpening lebih eksplisit
-            options = [
-                "Laplacian (Center -4) -> Standard",
-                "Laplacian (Center -8) -> Include Diagonals",
-                "Laplacian (Center +8) -> Inverted Center",
-                "High-Boost Filtering (A=1.2)",
-            ]
-            self.thresh_frame.pack_forget()
+    # =========================================================================
+    # TAB 2: HUBBLE CASE
+    # =========================================================================
+    def setup_hubble_tab(self):
+        top = ttk.Frame(self.tab_hubble)
+        top.pack(fill="x", pady=10)
+        ttk.Button(top, text="📂 Load Hubble Image (a)", command=self.load_hubble, style="Primary.TButton").pack(
+            side="left")
 
-        elif "Segmentation" in category:
-            options = [
-                "Point Detection (Laplacian Mask)",
-                "Line Detection: Horizontal",
-                "Line Detection: Vertical",
-                "Line Detection: +45 Degree",
-                "Line Detection: -45 Degree"
-            ]
-            self.thresh_frame.pack(fill="x", pady=(5, 0), after=self.cb_filter.master)
+        ttk.Label(top, text="Threshold:", style="Sub.TLabel").pack(side="left", padx=(20, 5))
+        self.hubble_thresh = tk.IntVar(value=65)
+        self.lbl_hubble_val = tk.Label(top, text="65")
+        self.lbl_hubble_val.pack(side="left", padx=2)
+        ttk.Scale(top, from_=0, to=255, variable=self.hubble_thresh,
+                  command=lambda v: self.lbl_hubble_val.config(text=f"{float(v):.0f}")).pack(side="left", padx=5)
+
+        ttk.Button(top, text="▶ Run (a->b->c)", command=self.run_hubble, style="Soft.TButton").pack(side="left",
+                                                                                                    padx=20)
+
+        grid = ttk.Frame(self.tab_hubble)
+        grid.pack(fill="both", expand=True)
+        self.lbl_hubble_a = self.create_img_frame(grid, 0, "Original (a)")
+        self.lbl_hubble_b = self.create_img_frame(grid, 1, "Processed 15x15 (b)")
+        self.lbl_hubble_c = self.create_img_frame(grid, 2, "Thresholded (c)", save_btn=True)
+
+    def load_hubble(self):
+        img = self._load_img()
+        if img is not None:
+            self.hubble_src = img
+            self.display_image_fit(img, self.lbl_hubble_a)
+            self.lbl_hubble_b.config(image="")
+            self.lbl_hubble_c.config(image="")
+
+    def run_hubble(self):
+        if self.hubble_src is None: return
+        img_a = self.hubble_src
+        if len(img_a.shape) == 3:
+            img_gray = cv2.cvtColor(img_a, cv2.COLOR_BGR2GRAY)
         else:
-            options = []
-            self.thresh_frame.pack_forget()
+            img_gray = img_a.copy()
 
-        self.cb_filter['values'] = options
-        if options:
-            self.cb_filter.current(0)
+        img_b = cv2.blur(img_gray, (15, 15))
+        self.display_image_fit(img_b, self.lbl_hubble_b)
 
-    def open_image(self):
-        path = filedialog.askopenfilename(filetypes=[("Image Files", "*.png;*.jpg;*.jpeg;*.bmp;*.tiff;*.tif")])
-        if not path: return
-        img = cv2.imread(path)
-        if img is None: return
-        self.original_img_cv = img
-        self.display_image(self.original_img_cv, self.lbl_original)
-        self.reset_image()
+        thresh_val = self.hubble_thresh.get()
+        _, img_c = cv2.threshold(img_b, thresh_val, 255, cv2.THRESH_BINARY)
+        self.display_image_fit(img_c, self.lbl_hubble_c)
+        self.current_hubble_res = img_c
 
-    def reset_image(self):
-        self.processed_img_cv = None
-        self.lbl_result.config(image="")
-        self.lbl_result.image = None
-        if self.original_img_cv is not None:
-            self.display_image(self.original_img_cv, self.lbl_original)
+    # =========================================================================
+    # TAB 3: MEDIAN FILTER
+    # =========================================================================
+    def setup_median_tab(self):
+        top = ttk.Frame(self.tab_median)
+        top.pack(fill="x", pady=10)
+        ttk.Button(top, text="📂 Load Noisy Img", command=self.load_median_src, style="Primary.TButton").pack(
+            side="left", padx=5)
+        ttk.Button(top, text="🧂 Add S&P Noise", command=self.add_noise_median, style="Soft.TButton").pack(side="left",
+                                                                                                          padx=5)
+        ttk.Button(top, text="▶ Run Comparison", command=self.run_median_compare, style="Soft.TButton").pack(
+            side="left", padx=15)
 
-    def add_salt_pepper_noise(self):
-        if self.original_img_cv is None: return
-        row, col = self.original_img_cv.shape[:2]
-        noisy = self.original_img_cv.copy()
-        number_of_pixels = random.randint(300, 5000)
+        grid = ttk.Frame(self.tab_median)
+        grid.pack(fill="both", expand=True)
+        self.lbl_med_a = self.create_img_frame(grid, 0, "(a) Noisy Image")
+        self.lbl_med_b = self.create_img_frame(grid, 1, "(b) Mean Filter 3x3")
+        self.lbl_med_c = self.create_img_frame(grid, 2, "(c) Median Filter 3x3", save_btn=True)
 
-        # Salt
-        for i in range(number_of_pixels):
-            y = random.randint(0, row - 1)
-            x = random.randint(0, col - 1)
+    def load_median_src(self):
+        img = self._load_img()
+        if img is not None:
+            self.median_src = img
+            self.display_image_fit(img, self.lbl_med_a)
+
+    def add_noise_median(self):
+        if self.median_src is None: return
+        row, col = self.median_src.shape[:2]
+        noisy = self.median_src.copy()
+        n_px = random.randint(1000, 10000)
+        for i in range(n_px):
+            y, x = random.randint(0, row - 1), random.randint(0, col - 1)
             noisy[y][x] = 255
-        # Pepper
-        for i in range(number_of_pixels):
-            y = random.randint(0, row - 1)
-            x = random.randint(0, col - 1)
+            y, x = random.randint(0, row - 1), random.randint(0, col - 1)
             noisy[y][x] = 0
+        self.median_src = noisy
+        self.display_image_fit(noisy, self.lbl_med_a)
 
-        self.original_img_cv = noisy
-        self.display_image(self.original_img_cv, self.lbl_original)
-        messagebox.showinfo("Info", "Noise ditambahkan. Coba gunakan 'Median Filter'.")
+    def run_median_compare(self):
+        if self.median_src is None: return
+        img = self.median_src
+        res_mean = cv2.blur(img, (3, 3))
+        self.display_image_fit(res_mean, self.lbl_med_b)
+        res_median = cv2.medianBlur(img, 3)
+        self.display_image_fit(res_median, self.lbl_med_c)
+        self.current_med_res = res_median
 
-    def display_image(self, cv_img, label_widget):
+    # =========================================================================
+    # TAB 4: SHARPENING (Page 11)
+    # =========================================================================
+    def setup_sharpening_tab(self):
+        ctrl = ttk.Frame(self.tab_sharp)
+        ctrl.pack(fill="x", pady=10)
+        ttk.Button(ctrl, text="📂 Load Image", command=self.load_sharp_src, style="Primary.TButton").pack(side="left")
+        ttk.Label(ctrl, text="Filter:", style="Sub.TLabel").pack(side="left", padx=(15, 5))
+        self.sharp_var = tk.StringVar()
+        opts = ["Laplacian (Center -4)", "Laplacian (Center -8)", "Laplacian (Center +8)", "High-Boost (A=1.2)"]
+        self.cb_sharp = ttk.Combobox(ctrl, textvariable=self.sharp_var, values=opts, state="readonly", width=25)
+        self.cb_sharp.pack(side="left", padx=5)
+        self.cb_sharp.current(0)
+        ttk.Button(ctrl, text="▶ Apply", command=self.run_sharpening, style="Soft.TButton").pack(side="left", padx=10)
+
+        grid = ttk.Frame(self.tab_sharp)
+        grid.pack(fill="both", expand=True)
+        self.lbl_sharp_src = self.create_img_frame(grid, 0, "Original")
+        self.lbl_sharp_res = self.create_img_frame(grid, 1, "Result", save_btn=True)
+
+        self.lbl_kernel_vis = tk.Label(self.tab_sharp, text="Kernel Matrix: -", bg="white", font=("Consolas", 10),
+                                       relief="solid", bd=1, pady=5)
+        self.lbl_kernel_vis.pack(fill="x", pady=10)
+
+    def load_sharp_src(self):
+        img = self._load_img()
+        if img is not None:
+            self.sharp_src = img
+            self.display_image_fit(img, self.lbl_sharp_src)
+
+    def run_sharpening(self):
+        if self.sharp_src is None: return
+        mode = self.sharp_var.get()
+        img = self.sharp_src
+        if len(img.shape) == 3:
+            gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        else:
+            gray = img.copy()
+
+        res = None;
+        kernel_txt = ""
+        if "Laplacian" in mode:
+            if "-4" in mode:
+                k = np.array([[0, 1, 0], [1, -4, 1], [0, 1, 0]])
+                sharpen_k = np.array([[0, -1, 0], [-1, 5, -1], [0, -1, 0]])
+            elif "-8" in mode:
+                k = np.array([[1, 1, 1], [1, -8, 1], [1, 1, 1]])
+                sharpen_k = np.array([[-1, -1, -1], [-1, 9, -1], [-1, -1, -1]])
+            else:
+                k = np.array([[-1, -1, -1], [-1, 8, -1], [-1, -1, -1]])
+                sharpen_k = np.array([[1, 1, 1], [1, -7, 1], [1, 1, 1]])
+            kernel_txt = str(k).replace('[', ' ').replace(']', ' ')
+            res = cv2.filter2D(img, -1, sharpen_k)
+        elif "High-Boost" in mode:
+            kernel_txt = "Formula: Img + A*(Img - Blur)"
+            blur = cv2.GaussianBlur(gray, (5, 5), 0)
+            mask = cv2.addWeighted(gray.astype(float), 1.0, blur.astype(float), -1.0, 0)
+            res_float = gray.astype(float) + 1.2 * mask
+            res = np.clip(res_float, 0, 255).astype(np.uint8)
+
+        self.lbl_kernel_vis.config(text=f"Active Kernel ({mode}):\n{kernel_txt}")
+        self.display_image_fit(res, self.lbl_sharp_res)
+        self.current_sharp_res = res
+
+    # =========================================================================
+    # TAB 5: IMAGE GRADIENT (Page 11-12)
+    # =========================================================================
+    def setup_gradient_tab(self):
+        ctrl = ttk.Frame(self.tab_grad)
+        ctrl.pack(fill="x", pady=10)
+
+        # 1. Action Buttons
+        ttk.Button(ctrl, text="📂 Load Source", command=self.load_grad_src, style="Primary.TButton").pack(side="left")
+        ttk.Button(ctrl, text="▶ Calculate Gradient", command=self.run_gradient, style="Soft.TButton").pack(side="left",
+                                                                                                            padx=10)
+
+        # 2. View Options
+        ttk.Label(ctrl, text="|  View:", style="Sub.TLabel").pack(side="left", padx=(10, 5))
+
+        # Pg 11: 3 Gambar (Orig + 2 Gray Output)
+        ttk.Radiobutton(ctrl, text="Pg 11 (Orig + 2 Gray)", variable=self.grad_view_mode,
+                        value="Pg11", command=self.update_grad_grid).pack(side="left", padx=5)
+
+        # Pg 12: 4 Gambar Lengkap
+        ttk.Radiobutton(ctrl, text="Pg 12 (Full)", variable=self.grad_view_mode,
+                        value="Pg12", command=self.update_grad_grid).pack(side="left", padx=5)
+
+        # Container Grid
+        self.grad_grid_frame = ttk.Frame(self.tab_grad)
+        self.grad_grid_frame.pack(fill="both", expand=True)
+
+        # Init View
+        self.update_grad_grid()
+
+    def update_grad_grid(self):
+        # Clear
+        for w in self.grad_grid_frame.winfo_children(): w.destroy()
+        mode = self.grad_view_mode.get()
+
+        if mode == "Pg11":
+            # Layout Halaman 11 Akhir: Original dan 2 Gambar Gray (First Order Derivatives)
+            # Layout: Atas = Original, Bawah = Gx dan Gy
+            self.grad_grid_frame.columnconfigure(0, weight=1)
+            self.grad_grid_frame.columnconfigure(1, weight=1)
+            self.grad_grid_frame.rowconfigure(0, weight=1)
+            self.grad_grid_frame.rowconfigure(1, weight=1)
+
+            # Row 0: Original (Span 2 kolom agar di tengah)
+            f = ttk.Frame(self.grad_grid_frame, style="Card.TFrame")
+            f.grid(row=0, column=0, columnspan=2, sticky="nsew", padx=3, pady=3)
+            # Isi frame Original
+            h = tk.Frame(f, bg="#F1F5F9");
+            h.pack(fill="x", pady=2, padx=5)
+            tk.Label(h, text="Original Image", bg="#F1F5F9", font=("Segoe UI", 8, "bold")).pack(side="left")
+            self.lbl_grad_src_custom = tk.Label(f, bg="#F1F5F9");
+            self.lbl_grad_src_custom.pack(fill="both", expand=True)
+            self.lbl_grad_src = self.lbl_grad_src_custom  # Pointer standar
+
+            # Row 1: Gx dan Gy (Gray)
+            self.lbl_grad_x = self.create_img_frame_grid(self.grad_grid_frame, 1, 0, "Partial X (dP/dx) - Gray")
+            self.lbl_grad_y = self.create_img_frame_grid(self.grad_grid_frame, 1, 1, "Partial Y (dP/dy) - Gray")
+
+            self.lbl_grad_mag = None
+
+        else:
+            # Layout Halaman 12 (4 Gambar Grid 2x2)
+            self.grad_grid_frame.columnconfigure(0, weight=1)
+            self.grad_grid_frame.columnconfigure(1, weight=1)
+            self.grad_grid_frame.rowconfigure(0, weight=1)
+            self.grad_grid_frame.rowconfigure(1, weight=1)
+
+            # Baris 1
+            self.lbl_grad_src = self.create_img_frame_grid(self.grad_grid_frame, 0, 0, "(a) Original (P)")
+            self.lbl_grad_x = self.create_img_frame_grid(self.grad_grid_frame, 0, 1, "(b) Partial X (dP/dx)")
+
+            # Baris 2
+            self.lbl_grad_y = self.create_img_frame_grid(self.grad_grid_frame, 1, 0, "(c) Partial Y (dP/dy)")
+            self.lbl_grad_mag = self.create_img_frame_grid(self.grad_grid_frame, 1, 1, "(d) Magnitude |VP|",
+                                                           save_btn=True)
+
+        # Reload image
+        if self.grad_res_cache:
+            self.refresh_grad_display()
+        elif self.grad_src is not None and self.lbl_grad_src:
+            self.display_image_grid(self.grad_src, self.lbl_grad_src)
+
+    def load_grad_src(self):
+        img = self._load_img()
+        if img is not None:
+            self.grad_src = img
+            self.grad_res_cache = {}
+            if hasattr(self, 'lbl_grad_src') and self.lbl_grad_src:
+                self.display_image_grid(img, self.lbl_grad_src)
+
+    def run_gradient(self):
+        if self.grad_src is None: return
+        img = self.grad_src
+        if len(img.shape) == 3:
+            gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        else:
+            gray = img.copy()
+
+        # Hitung Gradient Sobel (CV_64F)
+        gx_64 = cv2.Sobel(gray, cv2.CV_64F, 1, 0, ksize=3)
+        gy_64 = cv2.Sobel(gray, cv2.CV_64F, 0, 1, ksize=3)
+        mag = cv2.magnitude(gx_64, gy_64)
+
+        # --- PERBAIKAN UTAMA: VISUALISASI GRAY (OFFSET) ---
+        # Rumus: Output = (Input * scale) + delta
+        # Kita set delta (beta) = 128 agar 0 menjadi abu-abu tengah.
+        # Ini akan menghasilkan efek "gray gelap dan gray terang".
+
+        vis_gx = cv2.convertScaleAbs(gx_64, alpha=1.0, beta=128)
+        vis_gy = cv2.convertScaleAbs(gy_64, alpha=1.0, beta=128)
+
+        # Untuk Magnitude biasanya positif semua, jadi 0-255 biasa (hitam=0)
+        # Tapi jika Anda ingin magnitude juga inverted/offset, bisa diatur.
+        # Default magnitude biasanya latar hitam garis putih.
+        vis_mag = cv2.convertScaleAbs(mag)
+
+        # Simpan
+        self.grad_res_cache = {
+            "gx": vis_gx,
+            "gy": vis_gy,
+            "mag": vis_mag,
+            "orig": gray
+        }
+        self.current_grad_res = vis_mag
+        self.refresh_grad_display()
+
+    def refresh_grad_display(self):
+        if not self.grad_res_cache: return
+
+        gx = self.grad_res_cache["gx"]
+        gy = self.grad_res_cache["gy"]
+        mag = self.grad_res_cache["mag"]
+        orig = self.grad_res_cache.get("orig", None)
+
+        if self.lbl_grad_src and orig is not None: self.display_image_grid(orig, self.lbl_grad_src)
+        if self.lbl_grad_mag: self.display_image_grid(mag, self.lbl_grad_mag)
+        if self.lbl_grad_x: self.display_image_grid(gx, self.lbl_grad_x)
+        if self.lbl_grad_y: self.display_image_grid(gy, self.lbl_grad_y)
+
+    # --- Helpers ---
+    def create_img_frame(self, parent, col, title, save_btn=False):
+        parent.columnconfigure(col, weight=1)
+        f = ttk.Frame(parent, style="Card.TFrame")
+        f.grid(row=0, column=col, sticky="nsew", padx=5, pady=5)
+        h = tk.Frame(f, bg="#F1F5F9");
+        h.pack(fill="x", pady=2, padx=5)
+        tk.Label(h, text=title, bg="#F1F5F9", font=("Segoe UI", 8, "bold")).pack(side="left")
+        if save_btn: tk.Button(h, text="💾", bd=0, bg="#ddd", command=lambda: self.save_smart(title)).pack(side="right")
+        lbl = tk.Label(f, bg="#F1F5F9");
+        lbl.pack(fill="both", expand=True)
+        return lbl
+
+    def create_img_frame_grid(self, parent, r, c, title, save_btn=False):
+        f = ttk.Frame(parent, style="Card.TFrame")
+        f.grid(row=r, column=c, sticky="nsew", padx=3, pady=3)
+        h = tk.Frame(f, bg="#F1F5F9");
+        h.pack(fill="x", pady=2, padx=5)
+        tk.Label(h, text=title, bg="#F1F5F9", font=("Segoe UI", 8, "bold")).pack(side="left")
+        if save_btn: tk.Button(h, text="💾", bd=0, bg="#ddd", command=lambda: self.save_smart(title)).pack(side="right")
+        lbl = tk.Label(f, bg="#F1F5F9");
+        lbl.pack(fill="both", expand=True)
+        return lbl
+
+    def save_smart(self, title):
+        target = None;
+        name = "result"
+        if "Sharpened" in title and hasattr(self, 'current_sharp_res'):
+            target = self.current_sharp_res;
+            name = "sharpening"
+        elif "Thresholded" in title and hasattr(self, 'current_hubble_res'):
+            target = self.current_hubble_res;
+            name = "hubble_threshold"
+        elif "Median" in title and hasattr(self, 'current_med_res'):
+            target = self.current_med_res;
+            name = "median_filter"
+        elif "Magnitude" in title and hasattr(self, 'current_grad_res'):
+            target = self.current_grad_res;
+            name = "gradient_magnitude"
+        if target is not None: self.save_image_cv(target, name)
+
+    def save_view(self, img, prefix):
+        if img is not None: self.save_image_cv(img, prefix)
+
+    def _load_img(self):
+        path = filedialog.askopenfilename(filetypes=[("Image Files", "*.png;*.jpg;*.jpeg;*.bmp;*.tif;*.tiff")])
+        if not path: return None
+        return cv2.imread(path)
+
+    def display_image_large(self, cv_img, label_widget):
+        self._display(cv_img, label_widget, 500)
+
+    def display_image_fit(self, cv_img, label_widget):
+        self._display(cv_img, label_widget, 350)
+
+    def display_image_grid(self, cv_img, label_widget):
+        self._display(cv_img, label_widget, 250)
+
+    def _display(self, cv_img, label, max_h):
         if cv_img is None: return
         try:
+            h, w = cv_img.shape[:2];
+            scale = max_h / h;
+            nw, nh = int(w * scale), int(h * scale)
             if len(cv_img.shape) == 2:
-                img_rgb = cv2.cvtColor(cv_img, cv2.COLOR_GRAY2RGB)
+                img = cv2.cvtColor(cv_img, cv2.COLOR_GRAY2RGB)
             else:
-                img_rgb = cv2.cvtColor(cv_img, cv2.COLOR_BGR2RGB)
-            pil_img = Image.fromarray(img_rgb)
-            pil_img.thumbnail((400, 400), Image.LANCZOS)
-            tk_img = ImageTk.PhotoImage(pil_img)
-            label_widget.config(image=tk_img)
-            label_widget.image = tk_img
+                img = cv2.cvtColor(cv_img, cv2.COLOR_BGR2RGB)
+            pil = Image.fromarray(img).resize((nw, nh), Image.LANCZOS)
+            tk_img = ImageTk.PhotoImage(pil)
+            label.config(image=tk_img);
+            label.image = tk_img
         except Exception as e:
-            print(f"Error: {e}")
-
-    def apply_filter(self):
-        if self.original_img_cv is None: return
-        category = self.category_var.get()
-        filter_type = self.filter_var.get()
-
-        img_src = self.original_img_cv.copy()
-
-        # Konversi ke Grayscale untuk operasi filtering yang membutuhkan 1 channel
-        if len(img_src.shape) == 3:
-            img_gray = cv2.cvtColor(img_src, cv2.COLOR_BGR2GRAY)
-        else:
-            img_gray = img_src
-
-        result = None
-
-        try:
-            # 1. SMOOTHING
-            if "Smoothing" in category:
-                k = int(filter_type.split()[-1].split('x')[0])  # Ambil angka dari nama filter "3x3"
-                if "Averaging" in filter_type:
-                    result = cv2.blur(img_src, (k, k))
-                elif "Median" in filter_type:
-                    result = cv2.medianBlur(img_src, k)
-                self.lbl_res_title.config(text=f"Result: {filter_type}")
-
-            # 2. SHARPENING
-            elif "Sharpening" in category:
-                # Menggunakan Kernel Manual untuk kontrol penuh (sesuai Textbooks)
-                kernel = None
-
-                if "Center -4" in filter_type:
-                    # Kernel Standard (Isotropic)
-                    kernel = np.array([[0, 1, 0], [1, -4, 1], [0, 1, 0]])
-                    # Composite = [[0, -1, 0], [-1, 5, -1], [0, -1, 0]]
-                    sharpening_kernel = np.array([[0, -1, 0], [-1, 5, -1], [0, -1, 0]])
-
-                elif "Center -8" in filter_type:
-                    # Termasuk Diagonal
-                    sharpening_kernel = np.array([[-1, -1, -1], [-1, 9, -1], [-1, -1, -1]])
-
-                elif "Center +8" in filter_type:
-                    # Varian lain
-                    sharpening_kernel = np.array([[1, 1, 1], [1, -7, 1], [1, 1, 1]])
-
-                elif "High-Boost" in filter_type:
-                    # A = 1.2
-                    A = 1.2
-                    blur = cv2.GaussianBlur(img_gray, (5, 5), 0)
-                    mask = cv2.addWeighted(img_gray.astype(float), 1.0, blur.astype(float), -1.0, 0)
-                    res_float = img_gray.astype(float) + A * mask
-                    result = np.clip(res_float, 0, 255).astype(np.uint8)
-
-                if result is None and "Laplacian" in filter_type:
-                    # Terapkan kernel sharpening langsung
-                    result = cv2.filter2D(img_src, -1, sharpening_kernel)
-
-                self.lbl_res_title.config(text=f"Result: {filter_type}")
-
-            # 3. SEGMENTATION
-            elif "Segmentation" in category:
-                kernel = None
-                if "Point" in filter_type:
-                    kernel = np.array([[-1, -1, -1], [-1, 8, -1], [-1, -1, -1]])
-                elif "Horizontal" in filter_type:
-                    kernel = np.array([[-1, -1, -1], [2, 2, 2], [-1, -1, -1]])
-                elif "Vertical" in filter_type:
-                    kernel = np.array([[-1, 2, -1], [-1, 2, -1], [-1, 2, -1]])
-                elif "+45" in filter_type:
-                    kernel = np.array([[-1, -1, 2], [-1, 2, -1], [2, -1, -1]])
-                elif "-45" in filter_type:
-                    kernel = np.array([[2, -1, -1], [-1, 2, -1], [-1, -1, 2]])
-
-                if kernel is not None:
-                    # Filtering
-                    filtered = cv2.filter2D(img_gray, cv2.CV_64F, kernel)
-                    abs_filtered = cv2.convertScaleAbs(filtered)
-
-                    # Thresholding untuk segmentasi tegas (Hitam/Putih)
-                    thresh_val = self.thresh_val.get()
-                    _, result_bin = cv2.threshold(abs_filtered, thresh_val, 255, cv2.THRESH_BINARY)
-                    result = result_bin  # Output biner
-
-                self.lbl_res_title.config(text=f"Segmented: {filter_type} (T={self.thresh_val.get()})")
-
-            self.processed_img_cv = result
-            self.display_image(self.processed_img_cv, self.lbl_result)
-
-        except Exception as e:
-            messagebox.showerror("Error", f"Terjadi kesalahan: {e}")
+            print(e)
