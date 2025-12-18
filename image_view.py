@@ -61,15 +61,35 @@ class ImageViewerApp(BaseFrame):
         self.show_on_canvas(self.img_rgb)
 
     def show_on_canvas(self, img, is_gray=False):
-        vh = self.canvas.winfo_height()
-        vw = self.canvas.winfo_width()
-        if vh < 100: vh = 500
-        if vw < 100: vw = 800
+        # [FIX PERMANEN]
+        # Jangan ambil ukuran dari self.canvas atau self.canvas.master karena mereka bisa mengecil (shrink).
+        # Ambil ukuran dari 'self' (ImageViewerApp) yaitu frame utama panel kanan yang ukurannya stabil.
+
+        # Ambil lebar/tinggi panel kanan keseluruhan
+        total_w = self.winfo_width()
+        total_h = self.winfo_height()
+
+        # Jika belum tampil (awal load), gunakan default aman
+        if total_w < 100: total_w = 900
+        if total_h < 100: total_h = 700
+
+        # Kurangi dengan estimasi area Header, Toolbar, dan Padding agar gambar pas
+        # Header + Toolbar ~ 250px, Padding Kiri-Kanan ~ 80px
+        vw = total_w - 80
+        vh = total_h - 280
+
+        # Pastikan tidak minus
+        if vw < 100: vw = 400
+        if vh < 100: vh = 400
 
         h, w = img.shape[:2]
-        scale = min(vw / w, vh / h) * 0.95
-        new_w, new_h = int(w * scale), int(h * scale)
 
+        # Hitung skala agar muat di area viewport yang sudah kita hitung statis tadi
+        scale = min(vw / w, vh / h)
+
+        # Resize
+        new_w, new_h = int(w * scale), int(h * scale)
         pil_img = Image.fromarray(img).resize((new_w, new_h), Image.LANCZOS)
+
         self.tk_img = ImageTk.PhotoImage(pil_img)
         self.canvas.config(image=self.tk_img, text="")

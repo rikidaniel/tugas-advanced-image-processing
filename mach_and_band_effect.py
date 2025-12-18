@@ -99,7 +99,7 @@ class MachBandApp(BaseFrame):
         self.save_image_cv(self.current_img_cv, name)
 
     def _display_final(self, pil_img, title_text):
-        # 1. Tambahkan Header Putih & Judul
+        # 1. Tambahkan Header Putih & Judul (Bagian ini Tetap)
         header_height = 40
         total_width = pil_img.width
         final_img = Image.new('RGB', (total_width, pil_img.height + header_height), 'white')
@@ -120,26 +120,33 @@ class MachBandApp(BaseFrame):
         draw.text((text_x, text_y), title_text, fill='black', font=font)
         final_img.paste(pil_img.convert('RGB'), (0, header_height))
 
-        # 2. LOGIKA RESIZE ANTI-LOOPING
-        # Kita ambil ukuran dari self.preview_frame (Induk) yang ukurannya stabil mengikuti jendela,
-        # BUKAN mengambil dari self.canvas (Label gambar) yang ukurannya berubah-ubah mengikuti gambar.
+        # 2. [FIX PERMANEN] LOGIKA RESIZE STABIL
+        # Ambil ukuran dari 'self' (Window utama/Tab) yang ukurannya Stabil.
+        # Jangan ambil dari self.preview_frame atau self.canvas yang mengecil mengikuti konten.
 
-        # Pakai update_idletasks agar ukuran frame valid jika baru pertama kali load
-        self.preview_frame.update_idletasks()
+        total_w = self.winfo_width()
+        total_h = self.winfo_height()
 
-        vh = self.preview_frame.winfo_height()
-        vw = self.preview_frame.winfo_width()
+        # Default aman jika window belum tampil penuh
+        if total_w < 100: total_w = 900
+        if total_h < 100: total_h = 700
 
-        # Fallback safety jika window belum tampil sempurna
-        if vh < 100: vh = 600
-        if vw < 100: vw = 600
+        # Kurangi space untuk Header Judul, Tombol Control, dan Margin
+        # Estimasi: Header + Tombol + Padding = ~300px
+        vw = total_w - 80  # Margin kiri-kanan
+        vh = total_h - 300  # Space vertikal yang tersisa untuk gambar
 
-        # Hitung skala agar gambar pas di layar (Fit Center)
-        scale = min(vw / total_width, vh / final_img.height) * 0.95
+        # Safety check agar tidak minus
+        if vw < 200: vw = 400
+        if vh < 200: vh = 400
+
+        # Hitung skala agar gambar pas di area viewport (Aspect Ratio Preserved)
+        scale = min(vw / total_width, vh / final_img.height)
 
         new_w = int(total_width * scale)
         new_h = int(final_img.height * scale)
 
+        # Resize
         final_img_resized = final_img.resize((new_w, new_h), Image.LANCZOS)
 
         self.tk_img = ImageTk.PhotoImage(final_img_resized)

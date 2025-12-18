@@ -6,15 +6,10 @@
   <component name="ChangeListManager">
     <list default="true" id="190c2e49-f92b-4c6f-9bf5-6287a320d672" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/arithmetic_operations.py" beforeDir="false" afterPath="$PROJECT_DIR$/arithmetic_operations.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/dft_explorer.py" beforeDir="false" afterPath="$PROJECT_DIR$/dft_explorer.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/frequency_filters.py" beforeDir="false" afterPath="$PROJECT_DIR$/frequency_filters.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/image_view.py" beforeDir="false" afterPath="$PROJECT_DIR$/image_view.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/mach_and_band_effect.py" beforeDir="false" afterPath="$PROJECT_DIR$/mach_and_band_effect.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/program3_single_pixel.py" beforeDir="false" afterPath="$PROJECT_DIR$/program3_single_pixel.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/resolution_histogram.py" beforeDir="false" afterPath="$PROJECT_DIR$/resolution_histogram.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/spatial_segmentation.py" beforeDir="false" afterPath="$PROJECT_DIR$/spatial_segmentation.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -68,6 +63,32 @@
     &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
 }</component>
+  <component name="RunManager">
+    <configuration name="main" type="PythonConfigurationType" factoryName="Python" nameIsGenerated="true">
+      <module name="tugas-advanced-image-processing" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="SDK_NAME" value="Python 3.13" />
+      <option name="WORKING_DIRECTORY" value="" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/main.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+  </component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
@@ -92,6 +113,7 @@
       <workItem from="1765383402273" duration="7000" />
       <workItem from="1765883718818" duration="9658000" />
       <workItem from="1765898993289" duration="1335000" />
+      <workItem from="1766056877289" duration="6941000" />
     </task>
     <servers />
   </component>
@@ -104,7 +126,7 @@
     <SUITE FILE_PATH="coverage/tugas_advanced_image_processing$frames.coverage" NAME="frames Coverage Results" MODIFIED="1763787006673" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/tugas_advanced_image_processing$dft_explorer.coverage" NAME="dft_explorer Coverage Results" MODIFIED="1763787333798" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/tugas_advanced_image_processing$frequency_filters.coverage" NAME="frequency_filters Coverage Results" MODIFIED="1763787348349" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/tugas_advanced_image_processing$main.coverage" NAME="main Coverage Results" MODIFIED="1765899722519" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/tugas_advanced_image_processing$main.coverage" NAME="main Coverage Results" MODIFIED="1766060623097" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="" />
     <SUITE FILE_PATH="coverage/tugas_advanced_image_processing$mach_and_band_effect.coverage" NAME="mach_and_band_effect Coverage Results" MODIFIED="1763785959109" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/tugas_advanced_image_processing$image_view.coverage" NAME="image_view Coverage Results" MODIFIED="1763785901284" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/tugas_advanced_image_processing$styles.coverage" NAME="styles Coverage Results" MODIFIED="1763787002542" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
