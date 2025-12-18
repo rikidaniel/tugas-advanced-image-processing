@@ -27,7 +27,7 @@ class SpatialSegmentationApp(BaseFrame):
         # Gradient Variables
         self.grad_src = None
         self.grad_res_cache = {}
-        self.grad_view_mode = tk.StringVar(value="Pg11")  # Default Pg11 sesuai request terakhir
+        self.grad_view_mode = tk.StringVar(value="Pg11")
 
         # --- TABS ---
         self.tab_smooth = ttk.Frame(self.notebook, padding=10)
@@ -286,11 +286,11 @@ class SpatialSegmentationApp(BaseFrame):
         ttk.Label(ctrl, text="|  View:", style="Sub.TLabel").pack(side="left", padx=(10, 5))
 
         # Pg 11: 3 Gambar (Orig + 2 Gray Output)
-        ttk.Radiobutton(ctrl, text="Pg 11 (Orig + 2 Gray)", variable=self.grad_view_mode,
+        ttk.Radiobutton(ctrl, text="Pg 11 (Orig + Gx + Gy)", variable=self.grad_view_mode,
                         value="Pg11", command=self.update_grad_grid).pack(side="left", padx=5)
 
         # Pg 12: 4 Gambar Lengkap
-        ttk.Radiobutton(ctrl, text="Pg 12 (Full)", variable=self.grad_view_mode,
+        ttk.Radiobutton(ctrl, text="Pg 12 (Full + Mag)", variable=self.grad_view_mode,
                         value="Pg12", command=self.update_grad_grid).pack(side="left", padx=5)
 
         # Container Grid
@@ -306,28 +306,25 @@ class SpatialSegmentationApp(BaseFrame):
         mode = self.grad_view_mode.get()
 
         if mode == "Pg11":
-            # Layout Halaman 11 Akhir: Original dan 2 Gambar Gray (First Order Derivatives)
-            # Layout: Atas = Original, Bawah = Gx dan Gy
+            # Layout Halaman 11: Top(Orig), Bottom Left(Gx), Bottom Right(Gy)
             self.grad_grid_frame.columnconfigure(0, weight=1)
             self.grad_grid_frame.columnconfigure(1, weight=1)
             self.grad_grid_frame.rowconfigure(0, weight=1)
             self.grad_grid_frame.rowconfigure(1, weight=1)
 
-            # Row 0: Original (Span 2 kolom agar di tengah)
+            # Row 0: Original (Span 2 kolom)
             f = ttk.Frame(self.grad_grid_frame, style="Card.TFrame")
             f.grid(row=0, column=0, columnspan=2, sticky="nsew", padx=3, pady=3)
-            # Isi frame Original
             h = tk.Frame(f, bg="#F1F5F9");
             h.pack(fill="x", pady=2, padx=5)
             tk.Label(h, text="Original Image", bg="#F1F5F9", font=("Segoe UI", 8, "bold")).pack(side="left")
             self.lbl_grad_src_custom = tk.Label(f, bg="#F1F5F9");
             self.lbl_grad_src_custom.pack(fill="both", expand=True)
-            self.lbl_grad_src = self.lbl_grad_src_custom  # Pointer standar
+            self.lbl_grad_src = self.lbl_grad_src_custom
 
-            # Row 1: Gx dan Gy (Gray)
-            self.lbl_grad_x = self.create_img_frame_grid(self.grad_grid_frame, 1, 0, "Partial X (dP/dx) - Gray")
-            self.lbl_grad_y = self.create_img_frame_grid(self.grad_grid_frame, 1, 1, "Partial Y (dP/dy) - Gray")
-
+            # Row 1: Gx (Kiri) dan Gy (Kanan)
+            self.lbl_grad_x = self.create_img_frame_grid(self.grad_grid_frame, 1, 0, "Partial X (dP/dx) - Bright")
+            self.lbl_grad_y = self.create_img_frame_grid(self.grad_grid_frame, 1, 1, "Partial Y (dP/dy) - Dark")
             self.lbl_grad_mag = None
 
         else:
@@ -371,20 +368,21 @@ class SpatialSegmentationApp(BaseFrame):
         # Hitung Gradient Sobel (CV_64F)
         gx_64 = cv2.Sobel(gray, cv2.CV_64F, 1, 0, ksize=3)
         gy_64 = cv2.Sobel(gray, cv2.CV_64F, 0, 1, ksize=3)
+
+        # Hitung Magnitude
         mag = cv2.magnitude(gx_64, gy_64)
 
-        # --- PERBAIKAN UTAMA: VISUALISASI GRAY (OFFSET) ---
-        # Rumus: Output = (Input * scale) + delta
-        # Kita set delta (beta) = 128 agar 0 menjadi abu-abu tengah.
-        # Ini akan menghasilkan efek "gray gelap dan gray terang".
+        # --- PERBAIKAN VISUALISASI (REQUEST USER) ---
+        # User request: "Yang kiri (Gx) di cerahin gray nya"
+        # Gx (Kiri): Beta = 200 (Background Abu-abu Terang)
+        # Gy (Kanan): Beta = 55 (Background Abu-abu Gelap)
+        # Alpha=1.5 agar kontras garis tepi tetap kuat
 
-        vis_gx = cv2.convertScaleAbs(gx_64, alpha=1.0, beta=128)
-        vis_gy = cv2.convertScaleAbs(gy_64, alpha=1.0, beta=128)
+        vis_gx = cv2.convertScaleAbs(gx_64, alpha=1.5, beta=160)
+        vis_gy = cv2.convertScaleAbs(gy_64, alpha=1.5, beta=128)
 
-        # Untuk Magnitude biasanya positif semua, jadi 0-255 biasa (hitam=0)
-        # Tapi jika Anda ingin magnitude juga inverted/offset, bisa diatur.
-        # Default magnitude biasanya latar hitam garis putih.
-        vis_mag = cv2.convertScaleAbs(mag)
+        # Magnitude tetap normalisasi 0-255 (hitam ke putih)
+        vis_mag = cv2.normalize(mag, None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8)
 
         # Simpan
         self.grad_res_cache = {
@@ -405,9 +403,9 @@ class SpatialSegmentationApp(BaseFrame):
         orig = self.grad_res_cache.get("orig", None)
 
         if self.lbl_grad_src and orig is not None: self.display_image_grid(orig, self.lbl_grad_src)
-        if self.lbl_grad_mag: self.display_image_grid(mag, self.lbl_grad_mag)
-        if self.lbl_grad_x: self.display_image_grid(gx, self.lbl_grad_x)
-        if self.lbl_grad_y: self.display_image_grid(gy, self.lbl_grad_y)
+        if self.lbl_grad_mag and mag is not None: self.display_image_grid(mag, self.lbl_grad_mag)
+        if self.lbl_grad_x and gx is not None: self.display_image_grid(gx, self.lbl_grad_x)
+        if self.lbl_grad_y and gy is not None: self.display_image_grid(gy, self.lbl_grad_y)
 
     # --- Helpers ---
     def create_img_frame(self, parent, col, title, save_btn=False):

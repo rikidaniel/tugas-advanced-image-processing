@@ -5,7 +5,8 @@ from styles import apply_theme, COLORS, FONTS
 # Import semua modul
 from image_view import ImageViewerApp
 from mach_and_band_effect import MachBandApp
-from resolution_histogram import ResHistApp
+# from resolution_histogram import ResHistApp
+from resolution_histogram import ResolutionApp, HistogramApp  # Ganti import lama (ResHistApp)
 from program3_single_pixel import SinglePixelApp
 from arithmetic_operations import ArithmeticApp
 from spatial_segmentation import SpatialSegmentationApp
@@ -19,7 +20,7 @@ class MainApp(tk.Tk):
     def __init__(self):
         super().__init__()
 
-        self.title("TUGAS PENGOLAHAN CITRA DIGITAL - UTS/UAS")
+        self.title("TUGAS PENGOLAHAN CITRA DIGITAL - UTS")
         self.geometry("1300x850")
         self.state("zoomed")
 
@@ -50,18 +51,22 @@ class MainApp(tk.Tk):
         self.menu_container.pack(fill="both", expand=True, padx=0)
 
         # [UPDATE] Daftar Menu
+        # Import class baru (pastikan import ini ada di atas file main.py)
+        # from resolution_histogram import ResolutionApp, HistogramApp
+
+        # [REVISI URUTAN MENU SESUAI PDF]
         self.menus = [
             ("01", "Image Viewer", ImageViewerApp),
             ("02", "Visual Perception (Pg 1)", MachBandApp),
-            ("03", "Res, Quant & Hist (Pg 1-7)", ResHistApp),
-            ("04", "Intensity Trans. (Pg 3-4)", SinglePixelApp),
-            ("05", "Arithmetic/Logic (Pg 7-10)", ArithmeticApp),
-            ("06", "Spatial Filters (Pg 10-12)", SpatialSegmentationApp),
-            ("07", "DFT Spectrum (Pg 13)", DftApp),
-            ("08", "Freq Filtering (Pg 14-16)", FrequencyFilterApp),
-            ("09", "Image Segmentation (Pg 17)", ImageSegmentationApp)  # Menu Baru
+            ("03", "Spatial Res & Quant (Pg 1-2)", ResolutionApp),  # Class baru 1
+            ("04", "Intensity Trans. (Pg 3-4)", SinglePixelApp),  # Sesuai PDF halaman 3-4
+            ("05", "Histogram Proc. (Pg 5-7)", HistogramApp),  # Class baru 2
+            ("06", "Arithmetic/Logic (Pg 7-10)", ArithmeticApp),
+            ("07", "Spatial Filters (Pg 10-12)", SpatialSegmentationApp),
+            ("08", "DFT Spectrum (Pg 13)", DftApp),
+            ("09", "Freq Filtering (Pg 14-16)", FrequencyFilterApp),
+            ("10", "Image Segmentation (Pg 17)", ImageSegmentationApp)
         ]
-
         self.btn_refs = []
         self.menu_map = {}
 
